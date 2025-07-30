@@ -1,6 +1,6 @@
 ---
-name: Build Cayo
-run-name: Build Cayo by @${{ github.actor }}
+name: Build SpamTagger
+run-name: Build SpamTagger and SpamTagger Plus by @${{ github.actor }}
 on:
   workflow_dispatch:
   schedule:
@@ -26,10 +26,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - variant: centos
+          - variant: spamtagger
             version: 10
-          - variant: fedora
-            version: 42
+          - variant: spamtagger-plus
+            version: 10
     container:
       image: "ghcr.io/ublue-os/devcontainer:latest"
       options: "--privileged --volume /var/lib/containers:/var/lib/containers --security-opt seccomp=unconfined --security-opt label=disable --user 0:0"
