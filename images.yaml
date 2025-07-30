@@ -8,9 +8,11 @@ spamtagger-bootc-base: &spamtagger-bootc-base
   repo: spamtagger-bootc
 spamtagger-base: &spamtagger-base
   cppFlags: ["SPAMTAGGER"]
+  product: spamtagger
   upstream: centos
 spamtagger-plus-base: &spamtagger-plus-base
   cppFlags: ["PLUS"]
+  product: spamtagger-plus
   upstream: centos
 spamtagger-10: &spamtagger-10
   <<: *spamtagger-base

@@ -47,10 +47,11 @@ image_version="$(image-get version)"
 image_description="$(image-get description)"
 image_cpp_flags="$(image-get cppFlags[])"
 image_is_default="$(image-get default)"
+image_product="$(image-get product)"
 if [ "true" != "${image_is_default}" ]; then
     image_is_default=false
 fi
-image_tag="$image_upstream$image_version"
+image_tag="$image_product-$image_version"
 '
 [private]
 build-missing := '
