@@ -10,12 +10,15 @@ set ${CI:+-x} -euo pipefail
 mkdir -m 0700 -p /var/roothome
 
 # /*
-# make /usr/local and /opt writable
+# make /opt writable
+#
+# Divergence from Cayo where /usr/local is also writable via /var/usrlocal/
+# This breaks deployment in Distrobox since `distrobox-init` throws ane error
+# when it tried to `mkdir` at /usr/local, which already exists as a symlink`
 # */
-mkdir -p /var/{opt,usrlocal}
+mkdir -p /var/opt
 rm -rf /opt /usr/local
 ln -sf var/opt /opt
-ln -sf ../var/usrlocal /usr/local
 
 # /*
 # remove any wifi support from base
