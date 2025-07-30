@@ -3,10 +3,10 @@ set unstable := true
 just := just_executable()
 podman := require('podman')
 podman-remote := which('podman-remote') || podman + ' --remote'
-builddir := shell('mkdir -p $1 && echo $1', absolute_path(env('CAYO_BUILD', 'build')))
-image := "cayo"
-variant := env('CAYO_VARIANT', shell('yq ".defaults.variant" images.yaml'))
-version := env('CAYO_VERSION', shell('yq ".defaults.version" images.yaml'))
+builddir := shell('mkdir -p $1 && echo $1', absolute_path(env('SPAMTAGGER_BUILD', 'build')))
+image := "spamtagger-bootc"
+variant := env('SPAMTAGGER_VARIANT', shell('yq ".defaults.variant" images.yaml'))
+version := env('SPAMTAGGER_VERSION', shell('yq ".defaults.version" images.yaml'))
 
 # Source Images
 
@@ -189,7 +189,8 @@ build-container $variant="" $version="":
     # Verify Source: do after upstream starts signing images
 
     # Tags
-    declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
+    #declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
+    declare -A gen_tags="(COMMIT_TAGS \"\" TIMESTAMP \"20250729\" BUILD_TAGS \"spamtagger spamtagger-10 spamtagger-plus spamtagger-plus-10\")"
     if [[ "{{ env('GITHUB_EVENT_NAME', '') }}" =~ pull_request ]]; then
         tags=(${gen_tags["COMMIT_TAGS"]})
     else
@@ -213,14 +214,14 @@ build-container $variant="" $version="":
     LABELS=(
         "--label" "containers.bootc=1"
         "--label" "io.artifacthub.package.deprecated=false"
-        "--label" "io.artifacthub.package.keywords=bootc,cayo,centos,fedora,ublue,universal-blue"
+        "--label" "io.artifacthub.package.keywords=bootc,spamtagger-bootc,centos,ublue,universal-blue"
         "--label" "io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/120078124?s=200&v=4"
         "--label" "io.artifacthub.package.maintainers=[{\"name\": \"bsherman\", \"email\": \"benjamin@holyarmy.org\"}]"
         "--label" "io.artifacthub.package.readme-url=https://raw.githubusercontent.com/$image_registry/$image_org/$image_repo/main/README.md"
         "--label" "org.opencontainers.image.created=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)"
         "--label" "org.opencontainers.image.description=$image_description"
         "--label" "org.opencontainers.image.license=Apache-2.0"
-        "--label" "org.opencontainers.image.source=https://raw.githubusercontent.com/ublue-os/cayo/refs/heads/main/Containerfile.in"
+        "--label" "org.opencontainers.image.source=https://raw.githubusercontent.com/spamtagger/spamtagger-bootc/refs/heads/main/Containerfile.in"
         "--label" "org.opencontainers.image.title=$image_name"
         "--label" "org.opencontainers.image.url=https://github.com/$image_org/$image_repo"
         "--label" "org.opencontainers.image.vendor=$image_org"

@@ -1,5 +1,5 @@
 FROM ZFS as akmods_zfs
-FROM SOURCE_IMAGE as cayo
+FROM SOURCE_IMAGE as spamtagger-bootc
 
 ARG IMAGE_VERSION_ARG
 ARG KERNEL_NAME_ARG
@@ -13,11 +13,11 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
 #include "build_files/01-common.sh"
-#ifdef CENTOS
-#include "build_files/centos/02-centos.sh"
+#ifdef PLUS
+#include "build_files/spamtagger-plus/02-centos.sh"
 #else 
-#include "build_files/fedora/02-fedora.sh"
-#endif /* CENTOS */
+#include "build_files/spamtagger/02-centos.sh"
+#endif /* PLUS */
 ostree container commit
 RUNEOF
 
@@ -27,12 +27,11 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
-#include "build_files/10-base-packages.sh"
-#ifdef CENTOS
-#include "build_files/centos/10-base-packages.sh"
+#ifdef PLUS
+#include "build_files/spamtagger-plus/10-base-packages.sh"
 #else 
-#include "build_files/fedora/10-base-packages.sh"
-#endif /* CENTOS */
+#include "build_files/spamtagger/10-base-packages.sh"
+#endif /* PLUS */
 ostree container commit
 RUNEOF
 
