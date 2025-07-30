@@ -1,7 +1,7 @@
 ---
 spamtagger-bootc-base: &spamtagger-bootc-base
   cppFlags: []
-  description: "A bootc server image with ZFS included"
+  description: "A bootc server image for SpamTagger appliances"
   name: spamtagger-bootc
   org: spamtagger
   registry: ghcr.io
@@ -18,14 +18,12 @@ spamtagger-10: &spamtagger-10
   <<: *spamtagger-base
   # TODO: Implement a Renovate Regex
   source: quay.io/centos-bootc/centos-bootc:stream10
-  zfs: ghcr.io/ublue-os/akmods-zfs:centos-10
   version: 10
   default: false
 spamtagger-plus-10: &spamtagger-plus-10
   <<: *spamtagger-plus-base
   # TODO: Implement a Renovate Regex
   source: quay.io/centos-bootc/centos-bootc:stream10
-  zfs: ghcr.io/ublue-os/akmods-zfs:centos-10
   version: 10
   default: true
 

@@ -202,27 +202,25 @@ build-container $variant="" $version="":
     for tag in "${tags[@]}"; do
         TAGS+=("--tag" "localhost/$image_name:$tag")
     done
-    AKMODS_ZFS_IMAGE=$(yq ".images.${image_name}-${variant}-${version}.zfs" images.yaml)
 
-    # Pull akmods-zfs image with retry as we always need it for kernel and ZFS
-    {{ podman }} pull --retry 3 $AKMODS_ZFS_IMAGE
-    # Pull source and akmods images with retry
-    {{ podman }} pull --retry 3 "$source_image"
+    # Divergence from Cayo: Custom kernel (ZFS) dropped. In Cayo an additional AKMODS image layer is pulled here. 
 
     # Labels
     IMAGE_VERSION="$image_version.$TIMESTAMP"
-    KERNEL_VERSION="$({{ podman }} inspect $AKMODS_ZFS_IMAGE --format '{{{{ index .Labels "ostree.linux" }}')"
+    # Divergence from Cayo: KERNEL_VERSION would be inspected from AKMODS image instead
+    KERNEL_VERSION="$({{ podman }} inspect $image_name:$image_tag --format '{{{{ index .Labels "ostree.linux" }}')"
+    # Divergence from Cayo: Updated labels
     LABELS=(
         "--label" "containers.bootc=1"
         "--label" "io.artifacthub.package.deprecated=false"
-        "--label" "io.artifacthub.package.keywords=bootc,spamtagger-bootc,centos,ublue,universal-blue"
-        "--label" "io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/120078124?s=200&v=4"
-        "--label" "io.artifacthub.package.maintainers=[{\"name\": \"bsherman\", \"email\": \"benjamin@holyarmy.org\"}]"
+        "--label" "io.artifacthub.package.keywords=bootc,spamtagger-bootc,centos,cayo,ublue,universal-blue"
+        "--label" "io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/205223896&v=4"
+        "--label" "io.artifacthub.package.maintainers=[{\"name\": \"John Mertz\", \"email\": \"git@john.me.tz\"}]"
         "--label" "io.artifacthub.package.readme-url=https://raw.githubusercontent.com/$image_registry/$image_org/$image_repo/main/README.md"
         "--label" "org.opencontainers.image.created=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)"
         "--label" "org.opencontainers.image.description=$image_description"
-        "--label" "org.opencontainers.image.license=Apache-2.0"
-        "--label" "org.opencontainers.image.source=https://raw.githubusercontent.com/spamtagger/spamtagger-bootc/refs/heads/main/Containerfile.in"
+        "--label" "org.opencontainers.image.license=GPLv3.0+"
+        "--label" "org.opencontainers.image.source=https://raw.githubusercontent.com/SpamTagger/SpamTagger-Bootc/refs/heads/main/Containerfile.in"
         "--label" "org.opencontainers.image.title=$image_name"
         "--label" "org.opencontainers.image.url=https://github.com/$image_org/$image_repo"
         "--label" "org.opencontainers.image.vendor=$image_org"
@@ -230,7 +228,7 @@ build-container $variant="" $version="":
         "--label" "ostree.linux=${KERNEL_VERSION}"
     )
     KERNEL_NAME="kernel"
-    if [[ "$AKMODS_ZFS_IMAGE" =~ longterm ]];then
+    if [[ "$KERNEL_VERSION" =~ longterm ]];then
         KERNEL_NAME="kernel-longterm"
     fi
 
@@ -242,7 +240,7 @@ build-container $variant="" $version="":
         "--cpp-flag=-DIMAGE_VERSION_ARG=IMAGE_VERSION=$IMAGE_VERSION"
         "--cpp-flag=-DKERNEL_NAME_ARG=KERNEL_NAME=$KERNEL_NAME"
         "--cpp-flag=-DSOURCE_IMAGE=$source_image"
-        "--cpp-flag=-DZFS=$AKMODS_ZFS_IMAGE"
+        # Divergence from Cayo: Removed additional flag: --cpp-flag=-DZFS=$AKMODS_ZFS_IMAGE
     )
     for FLAG in $image_cpp_flags; do
         BUILD_ARGS+=("--cpp-flag=-D$FLAG")
@@ -361,10 +359,7 @@ secureboot variant="" version="":
     trap 'rm -rf $TMPDIR' SIGINT EXIT
     {{ podman }} cp "$TMP":/usr/lib/modules/${kernel_release}/vmlinuz $TMPDIR/vmlinuz
     {{ podman }} rm -f $TMP
-    curl --retry 3 -Lo "$TMPDIR"/kernel-sign.der https://github.com/ublue-os/kernel-cache/raw/main/certs/public_key.der
-    curl --retry 3 -Lo "$TMPDIR"/akmods.der https://github.com/ublue-os/kernel-cache/raw/main/certs/public_key_2.der
-    openssl x509 -in "$TMPDIR"/kernel-sign.der -out "$TMPDIR"/kernel-sign.crt
-    openssl x509 -in "$TMPDIR"/akmods.der -out "$TMPDIR"/akmods.crt
+    # Divergence from Cayo: Removed UBlue certificates
     sbverify --list $TMPDIR/vmlinuz
     if ! sbverify --cert "$TMPDIR/kernel-sign.crt" "$TMPDIR/vmlinuz" || ! sbverify --cert "$TMPDIR/akmods.crt" "$TMPDIR/vmlinuz"; then
         echo "Secureboot Signature Failed...."

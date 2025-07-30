@@ -1,4 +1,3 @@
-FROM ZFS as akmods_zfs
 FROM SOURCE_IMAGE as spamtagger-bootc
 
 ARG IMAGE_VERSION_ARG
@@ -13,10 +12,12 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
 #include "build_files/01-common.sh"
+#include "build_files/02-centos.sh"
+#include "build_files/02-spamtagger.sh"
 #ifdef PLUS
-#include "build_files/spamtagger-plus/02-centos.sh"
+#include "build_files/spamtagger-plus/02-spamtagger.sh"
 #else 
-#include "build_files/spamtagger/02-centos.sh"
+#include "build_files/spamtagger/02-spamtagger.sh"
 #endif /* PLUS */
 ostree container commit
 RUNEOF
@@ -27,44 +28,16 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
+#include "build_files/10-base-packages.sh"
+#include "build_files/10-centos-packages.sh"
+#include "build_files/10-spamtagger-packages.sh"
 #ifdef PLUS
-#include "build_files/spamtagger-plus/10-base-packages.sh"
+#include "build_files/spamtagger-plus/10-packages.sh"
 #else 
-#include "build_files/spamtagger/10-base-packages.sh"
+#include "build_files/spamtagger/10-packages.sh"
 #endif /* PLUS */
 ostree container commit
 RUNEOF
-
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/var/log \
-    --mount=type=tmpfs,dst=/var/tmp \
-    --mount=type=tmpfs,dst=/tmp \
-    --mount=type=bind,from=akmods_zfs,source=/kernel-rpms,dst=/tmp/kernel-rpms \
-    bash <<'RUNEOF'
-#include "build_files/11-base-kernel-swap.sh"
-ostree container commit
-RUNEOF
-
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/var/log \
-    --mount=type=tmpfs,dst=/var/tmp \
-    --mount=type=tmpfs,dst=/tmp \
-    --mount=type=bind,from=akmods_zfs,src=/rpms,dst=/tmp/akmods-zfs-rpms \
-    bash <<'RUNEOF'
-#include "build_files/12-base-zfs.sh"
-ostree container commit
-RUNEOF
-
-#ifdef CENTOS
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/var/log \
-    --mount=type=tmpfs,dst=/var/tmp \
-    --mount=type=tmpfs,dst=/tmp \
-    bash <<'RUNEOF'
-#include "build_files/centos/12-base-kmods.sh"
-ostree container commit
-RUNEOF
-#endif /* CENTOS */
 
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/log \
