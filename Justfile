@@ -190,8 +190,7 @@ build-container $variant="" $version="":
     # Verify Source: do after upstream starts signing images
 
     # Tags
-    #declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
-    declare -A gen_tags="(COMMIT_TAGS \"\" TIMESTAMP \"20250729\" BUILD_TAGS \"spamtagger spamtagger-10 spamtagger-plus spamtagger-plus-10\")"
+    declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
     if [[ "{{ env('GITHUB_EVENT_NAME', '') }}" =~ pull_request ]]; then
         tags=(${gen_tags["COMMIT_TAGS"]})
     else
@@ -208,7 +207,6 @@ build-container $variant="" $version="":
     # Labels
     IMAGE_VERSION="$image_version.$TIMESTAMP"
     # Divergence from Cayo: KERNEL_VERSION would be inspected from AKMODS image instead
-    KERNEL_VERSION="$({{ podman }} inspect $image_name:$image_tag --format '{{{{ index .Labels "ostree.linux" }}')"
     # Divergence from Cayo: Updated labels
     LABELS=(
         "--label" "containers.bootc=1"
@@ -225,7 +223,6 @@ build-container $variant="" $version="":
         "--label" "org.opencontainers.image.url=https://github.com/$image_org/$image_repo"
         "--label" "org.opencontainers.image.vendor=$image_org"
         "--label" "org.opencontainers.image.version=${IMAGE_VERSION}"
-        "--label" "ostree.linux=${KERNEL_VERSION}"
     )
 
     # BuildArgs
@@ -276,9 +273,9 @@ hhd-rechunk $variant="" $version="":
     set ${CI:+-x} -eou pipefail
 
     # Labels
-    VERSION="$({{ podman }} inspect localhost/$image_name:$version --format '{{{{ index .Config.Labels "org.opencontainers.image.version" }}')"
-    LABELS="$({{ podman }} inspect localhost/$image_name:$version | jq -r '.[].Config.Labels | to_entries | map("\(.key)=\(.value|tostring)")|.[]')"
-    CREF=$({{ podman }} create localhost/$image_name:$version bash)
+    VERSION="$({{ podman }} inspect localhost/$image_name:$image_tag --format '{{{{ index .Config.Labels "org.opencontainers.image.version" }}')"
+    LABELS="$({{ podman }} inspect localhost/$image_name:$image_tag | jq -r '.[].Config.Labels | to_entries | map("\(.key)=\(.value|tostring)")|.[]')"
+    CREF=$({{ podman }} create localhost/$image_name:$variant-$version bash)
     OUT_NAME="$image_name.tar"
     MOUNT="$({{ podman }} mount $CREF)"
 
@@ -313,7 +310,7 @@ hhd-rechunk $variant="" $version="":
         --volume "{{ justfile_dir() }}:/var/git" \
         --volume cache_ostree:/var/ostree \
         --env REPO=/var/ostree/repo \
-        --env PREV_REF="$image_registry/$image_org/$image_name:$version" \
+        --env PREV_REF="$image_registry/$image_org/$image_name:$image_tag" \
         --env LABELS="$LABELS" \
         --env OUT_NAME="$OUT_NAME" \
         --env VERSION="$VERSION" \
