@@ -345,7 +345,14 @@ clean $variant $version $registry="":
 [group('CI')]
 push-to-registry $variant="" $version="" $destination="" $transport="":
     #!/usr/bin/bash
-    {{ if env('COSIGN_PRIVATE_KEY', '') != '' { 'printf "%s" "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key' } else { '' } }}
+    {{ if env('COSIGN_PRIVATE_KEY', '') != '' {\
+      'printf "%s" "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key\
+      cat >"/tmp/sigstore-params.yaml" <<"EOF"\
+privateKeyFile: /tmp/cosign.key\
+privateKeyPassphraseFile: /dev/null\
+EOF\
+'\
+    } else { '' } }}
     {{ if env('CI', '') != '' { logsum } else { '' } }}
 
     {{ default-inputs }}
@@ -359,7 +366,7 @@ push-to-registry $variant="" $version="" $destination="" $transport="":
     declare -a TAGS=($({{ podman }} image list localhost/$image_name:$image_tag --noheading --format 'table {{{{ .Tag }}'))
     for tag in "${TAGS[@]}"; do
         for i in {1..5}; do
-            {{ podman }} push {{ if env('COSIGN_PRIVATE_KEY', '') != '' { '--sign-by-sigstore=/etc/ublue-os-param-file.yaml' } else { '' } }} "localhost/$image_name:$image_tag" "$transport$destination/$image_name:$tag" 2>&1 && break || sleep $((5 * i));
+            {{ podman }} push {{ if env('COSIGN_PRIVATE_KEY', '') != '' { '--sign-by-sigstore=/tmp/sigstore-params.yaml' } else { '' } }} "localhost/$image_name:$image_tag" "$transport$destination/$image_name:$tag" 2>&1 && break || sleep $((5 * i));
             if [[ $i -eq '5' ]]; then
                 exit 1
             fi
@@ -367,6 +374,7 @@ push-to-registry $variant="" $version="" $destination="" $transport="":
         {{ if env('CI', '') != '' { 'log_sum $destination/$image_name:$tag' } else { '' } }}
     done
     {{ if env('CI', '') != '' { 'log_sum "\`\`\`"' } else { '' } }}
+    {{ if env('COSIGN_PRIVATE_KEY', '') != '' { 'rm /tmp/cosign.key' } else { '' } }}
 
 # Podmaon Machine Init
 [group('Podman Machine')]
