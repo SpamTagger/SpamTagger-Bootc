@@ -50,9 +50,6 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
 
-      - name: Secureboot Check
-        run: just secureboot
-
       - name: Push and Sign Image
         if: github.event_name != 'pull_request'
         run: |

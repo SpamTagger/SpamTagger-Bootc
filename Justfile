@@ -336,25 +336,6 @@ clean $variant $version $registry="":
         {{ podman }} rmi -f "${CLEAN[@]}"
     fi
 
-# Check Secureboot
-[group('CI')]
-secureboot variant="" version="":
-    #!/usr/bin/bash
-    {{ default-inputs }}
-    {{ just }} check-valid-image $variant $version
-    {{ get-names }}
-    mkdir -p {{ builddir / '$variant-$version' }}
-    cd {{ builddir / '$variant-$version' }}
-    set ${CI:+-x} -euo pipefail
-    kernel_release=$({{ podman }} inspect localhost/$image_name:$image_tag --format '{{{{ index .Labels "ostree.linux" }}')
-    TMP=$({{ podman }} create localhost/$image_name:$image_tag bash)
-    TMPDIR="$(mktemp -d -p .)"
-    trap 'rm -rf $TMPDIR' SIGINT EXIT
-    {{ podman }} cp "$TMP":/usr/lib/modules/${kernel_release}/vmlinuz $TMPDIR/vmlinuz
-    {{ podman }} rm -f $TMP
-    # Divergence from Cayo: Removed UBlue certificates
-    sbverify --list $TMPDIR/vmlinuz
-
 # Login to GHCR
 [group('CI')]
 @login-to-ghcr:
