@@ -8,13 +8,13 @@ set ${CI:+-x} -euo pipefail
 ### install wifi support
 # */
 dnf -y install \
-    NetworkManager-wifi \
-    atheros-firmware \
-    brcmfmac-firmware \
-    iwlegacy-firmware \
-    iwlwifi-dvm-firmware \
-    iwlwifi-mvm-firmware \
-    mt7xxx-firmware \
-    nxpwireless-firmware \
-    realtek-firmware \
-    tiwilink-firmware
+  NetworkManager-wifi \
+  atheros-firmware \
+  brcmfmac-firmware \
+  iwlegacy-firmware \
+  iwlwifi-dvm-firmware \
+  iwlwifi-mvm-firmware \
+  mt7xxx-firmware \
+  nxpwireless-firmware \
+  realtek-firmware \
+  tiwilink-firmware

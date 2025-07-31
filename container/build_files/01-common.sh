@@ -39,10 +39,7 @@ dnf -y remove \
 # other than ignition, coreos-installer, moby-engine, etc
 # */
 dnf -y install --setopt=install_weak_deps=False \
-  audit \
   git-core \
-  ipcalc \
-  iscsi-initiator-utils \
   rsync \
   ssh-key-dir
 

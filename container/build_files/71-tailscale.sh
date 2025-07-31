@@ -1,6 +1,10 @@
 set ${CI:+-x} -euo pipefail
 
 # /*
+# NOTE: THIS IS AN EXTENSION CANDIDATE
+# */
+
+# /*
 # Tailscale Repo
 # */
 dnf config-manager --add-repo https://pkgs.tailscale.com/stable/centos/"$(rpm -E %centos)"/tailscale.repo
@@ -10,5 +14,5 @@ dnf -y install --enablerepo='tailscale-stable' tailscale
 
 # /*
 # Install MergerFS
+# /run/build_files/github-release-install.sh trapexit/mergerfs "el$(rpm -E %centos).$(uname -m)"
 # */
-/run/build_files/github-release-install.sh trapexit/mergerfs "el$(rpm -E %centos).$(uname -m)"

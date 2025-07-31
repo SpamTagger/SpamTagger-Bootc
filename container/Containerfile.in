@@ -15,7 +15,7 @@ RUN --mount=type=cache,dst=/var/cache \
 #include "build_files/02-spamtagger.sh"
 #ifdef PLUS
 #include "build_files/spamtagger-plus/02-spamtagger.sh"
-#else 
+#else
 #include "build_files/spamtagger/02-spamtagger.sh"
 #endif /* PLUS */
 ostree container commit
@@ -27,12 +27,10 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
-#include "build_files/10-base-packages.sh"
-#include "build_files/10-centos-packages.sh"
 #include "build_files/10-spamtagger-packages.sh"
 #ifdef PLUS
 #include "build_files/spamtagger-plus/10-packages.sh"
-#else 
+#else
 #include "build_files/spamtagger/10-packages.sh"
 #endif /* PLUS */
 ostree container commit
@@ -44,6 +42,11 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
 #include "build_files/13-base-configurations.sh"
+#ifdef PLUS
+#include "build_files/spamtagger-plus/13-configuration.sh"
+#else
+#include "build_files/spamtagger/13-configuration.sh"
+#endif /* PLUS */
 ostree container commit
 RUNEOF
 
