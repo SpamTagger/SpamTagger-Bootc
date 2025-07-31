@@ -1,7 +1,6 @@
 FROM SOURCE_IMAGE as spamtagger-bootc
 
 ARG IMAGE_VERSION_ARG
-ARG KERNEL_NAME_ARG
 #ifdef CI_SETX
 ARG CI=1
 #endif /* CI_SETX */

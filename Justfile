@@ -208,8 +208,7 @@ build-container $variant="" $version="":
     # Labels
     IMAGE_VERSION="$image_version.$TIMESTAMP"
     # Divergence from Cayo: KERNEL_VERSION would be inspected from AKMODS image instead
-    KERNEL_VERSION="6.12.0-113.el10.x86_64"
-    #KERNEL_VERSION="$({{ podman }} inspect $image_name:$image_tag --format '{{{{ index .Labels "ostree.linux" }}')"
+    KERNEL_VERSION="$({{ podman }} inspect $image_name:$image_tag --format '{{{{ index .Labels "ostree.linux" }}')"
     # Divergence from Cayo: Updated labels
     LABELS=(
         "--label" "containers.bootc=1"
@@ -228,18 +227,14 @@ build-container $variant="" $version="":
         "--label" "org.opencontainers.image.version=${IMAGE_VERSION}"
         "--label" "ostree.linux=${KERNEL_VERSION}"
     )
-    KERNEL_NAME="kernel"
-    if [[ "$KERNEL_VERSION" =~ longterm ]];then
-        KERNEL_NAME="kernel-longterm"
-    fi
 
     # BuildArgs
     BUILD_ARGS=(
         "--security-opt=label=disable"
         "--cap-add=all"
         "--device" "/dev/fuse"
+        # Divergence from Cayo: KERNEL_NAME not specified, since no variants are needed for CentOS
         "--cpp-flag=-DIMAGE_VERSION_ARG=IMAGE_VERSION=$IMAGE_VERSION"
-        "--cpp-flag=-DKERNEL_NAME_ARG=KERNEL_NAME=$KERNEL_NAME"
         "--cpp-flag=-DSOURCE_IMAGE=$source_image"
         # Divergence from Cayo: Removed additional flag: --cpp-flag=-DZFS=$AKMODS_ZFS_IMAGE
     )
