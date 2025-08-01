@@ -124,7 +124,7 @@ gen-tags $variant="" $version="":
     if [[ -n "{{ env('GITHUB_PR_NUMBER', '') }}" ]]; then
         COMMIT_TAGS=("$image_tag" "pr-$image_tag-$SHA_SHORT" "pr-$image_tag-{{ env('GITHUB_PR_NUMBER', '') }}")
     fi
-    BUILD_TAGS=("$image_tag" "$image_tag-$TIMESTAMP")
+    BUILD_TAGS=("$variant" "$image_tag" "$image_tag-$TIMESTAMP")
 
     declare -A output
     output["BUILD_TAGS"]="${BUILD_TAGS[*]}"
