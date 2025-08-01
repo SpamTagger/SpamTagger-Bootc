@@ -345,20 +345,18 @@ clean $variant $version $registry="":
 [group('CI')]
 push-to-registry $variant="" $version="" $destination="" $transport="":
     #!/usr/bin/bash
-    {{ if env('COSIGN_PRIVATE_KEY', '') != '' {\
-      'printf "%s" "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key\
-      cat >"/tmp/sigstore-params.yaml" <<"EOF"\
-privateKeyFile: /tmp/cosign.key\
-privateKeyPassphraseFile: /dev/null\
-EOF\
-'\
-    } else { '' } }}
     {{ if env('CI', '') != '' { logsum } else { '' } }}
 
     {{ default-inputs }}
     {{ get-names }}
 
     set ${CI:+-x} -eou pipefail
+
+    if [[ "{{ env('COSIGN_PRIVATE_KEY' ) }}" != '' ]]; then
+      echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
+      echo "privateKeyFile: /tmp/cosign.key" >>"/tmp/sigstore-params.yaml"
+      echo "privateKeyPassphraseFile: /dev/null" >>"/tmp/sigstore-params.yaml"
+    fi
 
     : "${destination:=$image_registry/$image_org}"
     : "${transport:="docker://"}"
