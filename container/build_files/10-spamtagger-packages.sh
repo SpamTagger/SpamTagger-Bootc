@@ -9,6 +9,7 @@ dnf -y install ublue-os-signing
 mv /etc/containers/policy.json /etc/containers/policy.json-upstream
 mv /usr/etc/containers/policy.json /etc/containers/
 rm -fr /usr/etc
+sed -i 's/ublue-os/spamtagger/' /etc/containers/policy.json
 dnf -y copr disable ublue-os/packages
 
 # /*
