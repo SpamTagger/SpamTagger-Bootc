@@ -354,6 +354,7 @@ push-to-registry $variant="" $version="" $destination="" $transport="":
 
     if [[ "{{ env('COSIGN_PRIVATE_KEY' ) }}" != '' ]]; then
       echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
+      sed -i 's/ublue-os/spamtagger/' /etc/containers/registries.d/ublue-os.yaml
       echo "privateKeyFile: /tmp/cosign.key" > "/tmp/sigstore-params.yaml"
       echo "privateKeyPassphraseFile: /dev/null" >> "/tmp/sigstore-params.yaml"
     fi
