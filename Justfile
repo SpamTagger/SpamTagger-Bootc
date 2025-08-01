@@ -354,10 +354,6 @@ push-to-registry $variant="" $version="" $destination="" $transport="":
 
     if [[ "{{ env('COSIGN_PRIVATE_KEY' ) }}" != '' ]]; then
       echo "$COSIGN_PRIVATE_KEY" > /tmp/cosign.key
-      mkdir -p "/etc/containers/registries.conf.d/"
-      echo "docker:" > "/etc/containers/registries.conf.d/default.yaml"
-      echo "    ghrc.io:" >> "/etc/containers/registries.conf.d/default.yaml"
-      echo "        use-sigstore-attachments: true" >> "/etc/containers/registries.conf.d/default.yaml"
       echo "privateKeyFile: /tmp/cosign.key" > "/tmp/sigstore-params.yaml"
       echo "privateKeyPassphraseFile: /dev/null" >> "/tmp/sigstore-params.yaml"
     fi

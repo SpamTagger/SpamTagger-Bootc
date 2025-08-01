@@ -1,6 +1,17 @@
 set ${CI:+-x} -euo pipefail
 
 # /*
+### add ublue-os specific packages
+# */
+
+dnf -y copr enable ublue-os/packages
+dnf -y install ublue-os-signing
+mv /etc/containers/policy.json /etc/containers/policy.json-upstream
+mv /usr/etc/containers/policy.json /etc/containers/
+rm -fr /usr/etc
+dnf -y copr disable ublue-os/packages
+
+# /*
 # Common SpamTagger / SpamTagger Plus packages
 # */
 
