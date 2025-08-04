@@ -410,7 +410,7 @@ build-disk $variant="" $version="" $registry="": start-machine
     {{ default-inputs }}
     : "${registry:=localhost}"
     {{ get-names }}
-    fq_name="$registry/$image_name:$version"
+    fq_name="$registry/$image_name:$image_tag"
     set -eou pipefail
     # Create Build Dir
     mkdir -p {{ builddir / '$variant-$version' }}
@@ -421,8 +421,16 @@ build-disk $variant="" $version="" $registry="": start-machine
 
     # Load image into rootful podman-machine
     if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
-        echo "{{ style('error') }}Error:{{ NORMAL }} Image \"$fq_name\" not in image-store" >&2
-        exit 1
+        if ! "$registry" == "localhost"; then 
+          {{ podman-remote}} pull $fq_name
+          if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
+            echo "{{ style('error') }}Error:{{ NORMAL }} Image \"$fq_name\" not in image-store" >&2
+            exit 1
+          fi
+        else
+          echo "{{ style('error') }}Error:{{ NORMAL }} Image \"$fq_name\" not in image-store" >&2
+          exit 1
+        fi
     fi
     if ! {{ podman-remote }} image exists $fq_name; then
         COPYTMP="$(mktemp -p {{ builddir }} -d -t podman_scp.XXXXXXXXXX)" && trap 'rm -rf $COPYTMP' EXIT SIGINT
@@ -488,7 +496,7 @@ build-iso $variant="" $version="" $registry="": start-machine
     {{ default-inputs }}
     : "${registry:=localhost}"
     {{ get-names }}
-    fq_name="$registry/$image_name:$variant$version"
+    fq_name="$registry/$image_name:$variant-$version"
     set -eou pipefail
     # Create Build Dir
     mkdir -p {{ builddir / '$variant-$version' }}
