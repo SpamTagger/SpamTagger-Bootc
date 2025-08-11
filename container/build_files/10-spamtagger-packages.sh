@@ -97,8 +97,11 @@ dnf -y install --setopt=install_weak_deps=False \
 # /*
 # DCC doesn't have an official package, but is packaged on OBS
 # */
-wget https://download.opensuse.org/repositories/home:/voegelas/AlmaLinux_10/x86_64/dcc-2.3.169-8.3.x86_64.rpm
-rpm -i dcc-2.3.169-8.3.x86_64.rpm
+OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/AlmaLinux_10/x86_64/"
+VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc-[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
+wget $OBS_PATH$VERSION
+rpm -i $VERSION
+rm $VERSION
 
 # /*
 # GreylistD doesn't have an official package. Investigate built-in greylisting configuration provided by exim-greaylist:
