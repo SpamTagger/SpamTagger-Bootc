@@ -10,7 +10,7 @@ sed -i "s|^Version=.*|Version=\"$IMAGE_VERSION\"|" /usr/lib/os-release
 sed -i 's|^VENDOR_NAME=.*|VENDOR_NAME="SpamTagger"|' /usr/lib/os-release
 sed -i 's|^VENDOR_URL=.*|VENDOR_URL="spamtagger.org"|' /usr/lib/os-release
 sed -i 's|^HOME_URL=.*|HOME_URL="https://spamtagger.org"|' /usr/lib/os-release
-echo "DEFAULT_HOSTNAME=\"$IMAGE_VERSION\"" >>/usr/lib/os-release
+echo "DEFAULT_HOSTNAME=\"spamtagger-plus\"" >>/usr/lib/os-release
 echo "VARIANT_ID=\"$IMAGE_VERSION\"" >>/usr/lib/os-release
 
 # /*
