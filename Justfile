@@ -198,7 +198,7 @@ build-container $variant="" $version="":
         TAGS+=("--tag" "localhost/$image_name:$tag")
     done
 
-    # Divergence from Cayo: Custom kernel (ZFS) dropped. In Cayo an additional AKMODS image layer is pulled here. 
+    # Divergence from Cayo: Custom kernel (ZFS) dropped. In Cayo an additional AKMODS image layer is pulled here.
 
     # Labels
     IMAGE_VERSION="$image_version.$TIMESTAMP"
@@ -413,15 +413,16 @@ build-disk $variant="" $version="" $registry="": start-machine
     fq_name="$registry/$image_name:$image_tag"
     set -eou pipefail
     # Create Build Dir
-    mkdir -p {{ builddir / '$variant-$version' }}
+    mkdir -p {{ builddir / 'disks' }}
 
     # Process Template
-    cp BIB/disk.toml {{ builddir / '$variant-$version/disk.toml' }}
-    sed -i "s|<SSHPUBKEY>|$(cat {{ PUBKEY }})|" {{ builddir / '$variant-$version/disk.toml' }}
+    cp BIB/disk.toml {{ builddir / '$variant-$version.toml' }}
+    sed -i "s|<SSHPUBKEY>|$(cat {{ PUBKEY }})|" {{ builddir / '$variant-$version.toml' }}
 
     # Load image into rootful podman-machine
     if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
-        if ! "$registry" == "localhost"; then 
+        if ! [ "$registry" == "localhost" ]; then
+          # If using localhost registry, try pulling and check again
           {{ podman-remote}} pull $fq_name
           if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
             echo "{{ style('error') }}Error:{{ NORMAL }} Image \"$fq_name\" not in image-store" >&2
@@ -448,8 +449,8 @@ build-disk $variant="" $version="" $registry="": start-machine
         --privileged \
         --pull=newer \
         --security-opt label=type:unconfined_t \
-        -v {{ builddir / '$variant-$version' }}/disk.toml:/config.toml:ro \
-        -v {{ builddir / '$variant-$version' }}:/output \
+        -v {{ builddir / '$variant-$version' }}.toml:/config.toml:ro \
+        -v {{ builddir }}/disks:/output \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
         quay.io/centos-bootc/bootc-image-builder:latest \
         {{ if env('CI', '') != '' { '--progress verbose' } else { '--progress auto' } }} \
@@ -466,14 +467,14 @@ run-disk $variant="" $version="" $registry="":
     : "${registry:=localhost}"
     {{ get-names }}
     set -ou pipefail
-    if [ ! -f {{ builddir / '$variant-$version/qcow2/disk.qcow2' }} ]; then
+    if [ ! -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
         echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$image_name-$version-$variant\" not built" >&2 && exit 1
     fi
 
     {{ require('macadam') }} init \
         --ssh-identity-path {{ PRIVKEY }} \
         --username root \
-        {{ builddir / '$variant-$version/qcow2/disk.qcow2' }} 2> {{ builddir }}/error.log
+        {{ builddir / 'disks/$variant-$version.qcow2' }} 2> {{ builddir }}/error.log
     ec=$?
     if [ $ec != 0 ] && ! grep -q 'VM already exists' {{ builddir }}/error.log; then
         printf '{{ style('error') }}Error:{{ NORMAL }} %s\n' "$(sed -E 's/Error:\s//' {{ builddir }}/error.log)" >&2
@@ -499,15 +500,15 @@ build-iso $variant="" $version="" $registry="": start-machine
     fq_name="$registry/$image_name:$variant-$version"
     set -eou pipefail
     # Create Build Dir
-    mkdir -p {{ builddir / '$variant-$version' }}
+    mkdir -p {{ builddir / 'isos' }}
 
     # Process Template
-    cp BIB/iso.toml {{ builddir / '$variant-$version/iso.toml' }}
-    sed -i "s|<URL>|$fq_name|" {{ builddir / '$variant-$version/iso.toml' }}
+    cp BIB/iso.toml {{ builddir / '$variant-$version.toml' }}
+    sed -i "s|<URL>|$fq_name|" {{ builddir / '$variant-$version.toml' }}
     if [[ $registry == "localhost" ]]; then
-        sed -i "s|<SIGPOLICY>||" {{ builddir / '$variant-$version/iso.toml' }}
+        sed -i "s|<SIGPOLICY>||" {{ builddir / '$variant-$version.toml' }}
     else
-        sed -i "s|<SIGPOLICY>| --enforce-container-sigpolicy|" {{ builddir / '$variant-$version/iso.toml' }}
+        sed -i "s|<SIGPOLICY>| --enforce-container-sigpolicy|" {{ builddir / '$variant-$version.toml' }}
     fi
 
     # Load image into rootful podman-machine
@@ -531,7 +532,7 @@ build-iso $variant="" $version="" $registry="": start-machine
         --privileged \
         --pull=newer \
         --security-opt label=type:unconfined_t \
-        -v {{ builddir / '$variant-$version/iso.toml' }}:/config.toml:ro \
+        -v {{ builddir / '$variant-$version.toml' }}:/config.toml:ro \
         -v {{ builddir / '$variant-$version' }}:/output \
         -v /var/lib/containers/storage:/var/lib/containers/storage \
         quay.io/centos-bootc/bootc-image-builder:latest \
