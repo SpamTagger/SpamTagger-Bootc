@@ -76,7 +76,6 @@ dnf -y install --setopt=install_weak_deps=False --allowerasing \
   perl-Test-Pod-Coverage \
   perl-URI \
   podman \
-  podman-docker \
   poppler-utils \
   procps \
   python-is-python3 \
