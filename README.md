@@ -1,14 +1,14 @@
 # SpamTagger-Bootc
 
-This repository is used to generate OCI images and derived VMs and ISOs for SpamTagger Plus (with future support for [SpamTagger](https://github.com/SpamTagger/SpamTagger) already in place) appliances based on CentOS Stream 10.
+This repository is used to generate OCI images and derived VMs and ISOs for [SpamTagger Plus](https://github.com/SpamTagger/SpamTagger-Plus) appliances (with future support for [SpamTagger](https://github.com/SpamTagger/SpamTagger) already in place) based on CentOS Stream 10.
 
 ## 🚧 Under Construction 🚧
 
-This tool currently builds generic CentOS images with fairly minimal modification and does not yet produce a usable SpamTagger Plus configuration. Regardless of the progress made in this repository, note that the [SpamTagger Plus](https://github.com/SpamTagger/SpamTagger-Plus) application is still under construction as well. Any images build from this repository will not provide functional email filtering until both this repository and that one have a stable release.
+This tool currently builds generic CentOS images with fairly minimal modification and does not yet produce a usable SpamTagger Plus configuration. Regardless of the progress made in this repository, note that the SpamTagger Plus application is still under construction as well. Any images build from this repository will not provide functional email filtering until both this repository and that one have a stable release.
 
 ## 🏝️ Background 🏝️
 
-This project pulls significantly from the [Cayo](https://github.com/ublue-os/cayo) project, which itself is a variant of [Universal Blue (UBlue)](https://github.com/ublue-os) in order to create general purpose server images for container and storage workloads based on [CentOS](https://gitlab.com/redhat/centos-stream/containers/bootc/-/tree/c10s). SpamTagger-Bootc removes many of the tools built in to Cayo to suit only the functions necessary for email filtering.
+This project pulls significantly from the [Cayo](https://github.com/ublue-os/cayo) project, which itself is a variant of [Universal Blue (UBlue)](https://github.com/ublue-os) which targets general purpose server images for container and storage workloads based on [CentOS](https://gitlab.com/redhat/centos-stream/containers/bootc/-/tree/c10s). SpamTagger-Bootc removes many of the tools built in to Cayo to suit only the functions necessary for email filtering.
 
 ## 🥅 Goals 🥅
 
@@ -36,7 +36,7 @@ SpamTagger images:
 
 1. are defined via `images.yaml` with key "static" inputs required for a build (some tags and labels are generated or inspected).
 2. use `just` recipies to manage the build related functions, providing the same local build commands as are used in CI.
-3. use Podman's native C pre-processor (CPP) support for flow control (generation of a container file from `Containerfile`) instead of entirely static definitions in one or more `Containerfile`.`
+3. use Podman's native C pre-processor (CPP) support for flow control (generation of a container file from `Containerfile`) instead of entirely static definitions in one or more `Containerfile`.
 4. use devcontainer for a consistent build environment both locally and in CI
 
 `images.yaml` uses anchors and aliases to build different images and tags from common components. A hint to see the expanded contents:
@@ -62,7 +62,7 @@ In the future, additional tags for testing experimental feature branches.
 Building SpamTagger Bootc images on any workstation should be identical to how it is build with GitHub Actions. However you will need the following dependencies:
 
 - `just` - The main scripting/orchestration tool.
-- `bash` - Required for most commands within the `just` scripts.`
+- `bash` - Required for most commands within the `just` scripts.
 - GNU core utiliies (especially `sed` and `grep`) - Required to modify template files and take conditional actions.
 - `cpp` - Required for preprossor arguments to run different actions for each variant.
 - `jq` - Required to parse JSON manifest files.
