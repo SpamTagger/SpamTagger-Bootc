@@ -16,7 +16,7 @@ dnf -y copr disable ublue-os/packages
 # Common SpamTagger / SpamTagger Plus packages
 # */
 
-dnf -y install --setopt=install_weak_deps=False \
+dnf -y install --setopt=install_weak_deps=False --allowerasing \
   bind \
   bogofilter \
   bzip2 \
