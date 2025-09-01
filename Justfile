@@ -468,6 +468,9 @@ build-disk $variant="" $version="" $registry="": start-machine
         --rootfs xfs \
         $fq_name
 
+     mv {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
+     rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version.toml' }}
+
 # Run Disk Image
 [group('BIB')]
 run-disk $variant="" $version="" $registry="":
