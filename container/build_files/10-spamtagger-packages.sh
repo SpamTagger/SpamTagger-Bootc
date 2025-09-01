@@ -47,6 +47,7 @@ dnf -y install --setopt=install_weak_deps=False --allowerasing \
   perl-App-cpanminus \
   perl-Authen-Radius \
   perl-BSD-Resource \
+  perl-Convert-BinHex \
   perl-Data-Validate-IP \
   perl-Date-Calc \
   perl-DateTime \
@@ -70,6 +71,7 @@ dnf -y install --setopt=install_weak_deps=False --allowerasing \
   perl-Net-SMTP-SSL \
   perl-PerlIO-gzip \
   perl-Proc-ProcessTable \
+  perl-Razor-Agent \
   perl-Sys-Hostname \
   perl-Test-Manifest \
   perl-Test-Pod \
@@ -132,7 +134,6 @@ rm $VERSION
 # perl-config-yaml
 # perl-Archive-Any-Lite
 # perl-Archive-Zip-SimpleZip
-# perl-convert-binhex
 # perl-convert-tnef
 # perl-data-dump
 # perl-data-validate-domain
