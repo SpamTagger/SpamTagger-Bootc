@@ -446,9 +446,6 @@ build-disk $variant="" $version="" $registry="": start-machine
     if [ -f "{{ builddir /'disks/$variant-$version.qcow2' }}" ]; then
         echo Removing existing disk image {{ builddir /'disks/$variant-$version.qcow2' }}
         rm -f {{ builddir /'disks/$variant-$version.qcow2' }}
-    else
-        echo did not find mv {{ builddir /'disks/$variant-$version.qcow2' }}
-        exit 255
     fi
 
     # Build Disk Image
