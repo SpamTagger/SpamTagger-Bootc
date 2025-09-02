@@ -417,7 +417,11 @@ build-disk $variant="" $version="" $registry="": start-machine
 
     # Process Template
     cp BIB/disk.toml {{ builddir / '$variant-$version.toml' }}
-    sed -i "s|<SSHPUBKEY>|$(cat {{ PUBKEY }})|" {{ builddir / '$variant-$version.toml' }}
+    if [[ "{{ PUBKEY }}" != ""  ]]; then
+        sed -i "s|<SSHPUBKEY>|$(cat {{ PUBKEY }})|" {{ builddir / '$variant-$version.toml' }}
+    else
+        sed -i "/<SSHPUBKEY>/d" {{ builddir / '$variant-$version.toml' }}
+    fi
 
     # Load image into rootful podman-machine
     if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
