@@ -14,7 +14,7 @@ This project pulls significantly from the [Cayo](https://github.com/ublue-os/cay
 
 SpamTagger bootc images are meant to be suitable for appliance applications in a wide variety of contexts. To reach this goal the following techniques are employed:
 
-- `bootc` images provide an "immutable" root filesystem so that OS and application code cannot be modified or broken by the user or vulnerabilities. 
+- `bootc` images provide an "immutable" root filesystem so that OS and application code cannot be modified or broken by the user or vulnerabilities.
 - `bootc` also ensures that all deployments of the same version have identical operating system and application code. This means that bugs should be replicable across each deployment rather than being subject to an unknown number of confounding factors.
 - `bootc` also provides auto-updates to new versions of the application and operating system which are atomic and which replace the entire root filesystem image. This ensures that all updates will be installed completely and successfully.
 - In the event that the system successfully installs an update which is broken, `bootc` also provides automatic rollbacks to the last working version if the system fails to boot.
@@ -22,7 +22,7 @@ SpamTagger bootc images are meant to be suitable for appliance applications in a
 - CentOS provides a solid foundations because it is bound by [RedHat's compatibility guarantees](https://access.redhat.com/articles/rhel10-abi-compatibility), it provides a [long life-cycle](https://access.redhat.com/support/policy/updates/errata#Life_Cycle_Dates), and experiences relatively minimal churn throughout each release.
 - The minimum necessary tools for a functional mail filtering appliance will be included. The images should remain quite minimal in size (probably just over 2GB) and will not be suitable as a general-purpose server.
 - Administrative changes on the OS level will be strongly discouraged, aside from basics like network configuration.
-- Additional featurs which are generally desirable for other members of the community should be made available to be integrated back into the projects (as is a requirement of the [license](https://github.com/SpamTagger-Bootc/blob/main/LICENSE.md)). Other features which are more niche can be made available through system extensions via `systemd sysext` and Podman's [quadlets](https://github.com/containers/appstore). 
+- Additional featurs which are generally desirable for other members of the community should be made available to be integrated back into the projects (as is a requirement of the [license](https://github.com/SpamTagger-Bootc/blob/main/LICENSE.md)). Other features which are more niche can be made available through system extensions via `systemd sysext` and Podman's [quadlets](https://github.com/containers/appstore).
 - Installing additional applications and services outside of the OS and application sandbox via tools like Docker, Distrobox, Brew and Pip is still possible.
 - The CI/CD tools in this repository provide automated tools for building container images which can be pulled directly into a containerized environment, switched out from [an existing bootc installation](https://github.com/bootc-dev/bootc/blob/main/docs/src/man/bootc-switch.md) or [self-installed to an existing disk/filesystem](https://bootc-dev.github.io/bootc//bootc-install.html#executing-bootc-install) on a machine with Podman. These images will also be built into VM images supported by most major hypervisors (likely to be the primary method), as well as installable ISOs, and other formats.
 - It should also be possible to run images within a development environment using tools like
@@ -46,8 +46,9 @@ yq -r "explode(.)|.images" images.yaml
 ```
 
 SpamTagger will primarily build two images:
+
 - one for [SpamTagger Plus](https://github.com/SpamTagger/SpamTagger-Plus), the direct successor to MailCleaner which retains a WebUI and other more complex features.
-- and eventually one for [SpamTagger](https://github.com/SpamTagger/SpamTagger), the simplified, commandline-only hard fork 
+- and eventually one for [SpamTagger](https://github.com/SpamTagger/SpamTagger), the simplified, commandline-only hard fork
 
 Each of those is tagged at runtime with the version of CentOS which it is based upon as well as a timestamp. This allows users to track a different life-cycle:
 
@@ -75,10 +76,13 @@ Each build action has an associated `just` command. You can view them all by run
 
 You will primarily need:
 
-- `just build` (alias for `just build-container`) to build the container image and tag it within your container list (`podman images`)
-- `just hhd-rechunk` to reduce the container size.
-- `just build-disk` create a `qcow2` disk image from the container image.
+- `just build` - (alias for `just build-container`) to build the container image and tag it within your container list (`podman images`)
+- `just hhd-rechunk` - to reduce the container size.
+- `just build-disk` - create a `qcow2` disk image from the container image.
 - `just build-iso` - create an ISO installation image from the `qcow2` image.
+- `just convert-disk` - converts `qcow2` image to `vhdx` and/or `vmdk`.
+- `just bundle-vm` - compresses VM images with accompanying files into an archive and creates a checksum.
+- `push-to-cdn` - (work-in-progress) push the compressed VMs and checksums to CDN for download.
 
 ## See Also
 
