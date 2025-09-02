@@ -7,7 +7,7 @@ key = "<SSHPUBKEY>"
 mountpoint = "/"
 minsize = "4 GiB"
 
-[[customizations.filesystem]]
+[[customizations.filesystem.mountpoints]]
 mountpoint = "/etc/spamtagger"
 minsize = "100 MiB"
 
