@@ -544,6 +544,11 @@ bundle-vm $variant="" $version="" $vmformat="":
         sha256sum {{ builddir / 'vms/$variant-$version-$vmformat.7z' }} > {{ builddir / 'vms/$variant-$version-$vmformat.7z.sha256' }}
     fi
 
+[group('BIB')]
+push-to-cdn $variant="" $version="":
+    #!/usr/bin/env bash
+    echo "not implemented"
+
 # Run Disk Image
 [group('BIB')]
 run-disk $variant="" $version="" $registry="":
