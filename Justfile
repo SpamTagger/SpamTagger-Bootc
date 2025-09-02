@@ -470,7 +470,7 @@ build-disk $variant="" $version="" $registry="": start-machine
         $fq_name
 
      mv {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
-     rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version.toml' }}
+     rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version*' }}
 
 # Convert disk to supported other VM formats
 [group('BIB')]
@@ -502,6 +502,46 @@ convert-disk $variant="" $version="" $diskformat="":
         fi
         echo Creating VHDX disk
         qemu-img convert -p -f qcow2 -O vhdx -o subformat=dynamic,block_size=1M {{ builddir / 'disks/$variant-$version.qcow2' }} {{ builddir / 'disks/$variant-$version.vhdx' }}
+    fi
+
+# Bundle VM images into compressed archives with bundled files
+[group('BIB')]
+bundle-vm $variant="" $version="" $vmformat="":
+    #!/usr/bin/env bash
+    {{ default-inputs }}
+    : "${vmformat:=all}"
+    {{ get-names }}
+    set -ou pipefail
+
+    if [ ! -d {{ builddir / 'vms' }} ]; then
+        mkdir {{ builddir / 'vms' }}
+    fi
+    if [ "$vmformat" == "all" ]; then
+        {{ just }} bundle-vm $variant $version kvm
+        {{ just }} bundle-vm $variant $version ova
+        {{ just }} bundle-vm $variant $version vhdx
+    else
+        DISK="{{ vmformat }}"
+        if [ "$vmformat" == "ova" ] || [ "$vmformat" == "ami" ]; then
+            DISK='vmdk'
+        fi
+        if [ "$vmformat" == "kvm" ]; then
+            DISK='qcow2'
+        fi
+        if [ ! -f {{ builddir / 'disks/$variant-$version' }}.$DISK ]; then
+            {{ just }} convert-disk $variant $version $DISK
+            if [ ! -f {{ builddir / 'disks/$variant-$version' }}.$DISK ]; then
+                echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$version-$variant.$DISK\" does not exist" >&2 && exit 1
+            fi
+        fi
+        if [ -f {{ builddir / 'vms/$variant-$version.$vmformat.7z' }}.$DISK ]; then
+            echo Removing existing VM bundle {{ builddir / 'vms/$variant-$version-$vmformat.7z' }}
+            rm {{ builddir / 'vms/$variant-$version-$vmformat.7z' }}
+        fi
+        echo Compressing $vmformat
+        7z a {{ builddir / 'vms/$variant-$version-$vmformat.7z' }} {{ builddir / 'disks/$variant-$version' }}.$DISK
+        echo Generating checksum for $vmformat
+        sha256sum {{ builddir / 'vms/$variant-$version-$vmformat.7z' }} > {{ builddir / 'vms/$variant-$version-$vmformat.7z.sha256' }}
     fi
 
 # Run Disk Image
