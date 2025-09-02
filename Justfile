@@ -472,6 +472,38 @@ build-disk $variant="" $version="" $registry="": start-machine
      mv {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
      rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version.toml' }}
 
+# Convert disk to supported other VM formats
+[group('BIB')]
+convert-disk $variant="" $version="" $diskformat="":
+    #!/usr/bin/env bash
+    {{ default-inputs }}
+    : "${diskformat:=all}"
+    {{ get-names }}
+    set -ou pipefail
+    if [ ! -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
+        # Attempt to build if not already built
+        {{ just }} build-disk $variant $version
+        if [ ! -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
+            echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$image_name-$version-$variant\" not built" >&2 && exit 1
+        fi
+    fi
+    if [ "$diskformat" == "ami" ] || [ "$diskformat" == "ova" ] || [ "$diskformat" == "all" ]; then
+        if [ -f "{{ builddir / 'disks/$variant-$version.vmdk' }}" ]; then
+            echo Removing existing disk image {{ builddir / 'disks/$variant-$version.vmdk' }}
+            rm -f {{ builddir / 'disks/$variant-$version.vmdk' }}
+        fi
+        echo Creating VMDK disk
+        qemu-img convert -p -f qcow2 -O vmdk -o adapter_type=lsilogic,subformat=streamOptimized,compat6 {{ builddir / 'disks/$variant-$version.qcow2' }} {{ builddir / 'disks/$variant-$version.vmdk' }}
+    fi
+    if [ "$diskformat" == "vhdx" ] || [ "$diskformat" == "all" ]; then
+        if [ -f "{{ builddir / 'disks/$variant-$version.vhdx' }}" ]; then
+            echo Removing existing disk image {{ builddir / 'disks/$variant-$version.vhdx' }}
+            rm -f {{ builddir / 'disks/$variant-$version.vhdx' }}
+        fi
+        echo Creating VHDX disk
+        qemu-img convert -p -f qcow2 -O vhdx -o subformat=dynamic,block_size=1M {{ builddir / 'disks/$variant-$version.qcow2' }} {{ builddir / 'disks/$variant-$version.vhdx' }}
+    fi
+
 # Run Disk Image
 [group('BIB')]
 run-disk $variant="" $version="" $registry="":
