@@ -469,7 +469,9 @@ build-disk $variant="" $version="" $registry="": start-machine
         --rootfs xfs \
         $fq_name
 
-     mv {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
+     # Sparsify and compress
+     echo Shrinking disk image
+     qemu-img convert -c -O qcow2 {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
      rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version*' }}
 
 # Convert disk to supported other VM formats
@@ -589,8 +591,14 @@ build-iso $variant="" $version="" $registry="": start-machine
     {{ get-names }}
     fq_name="$registry/$image_name:$variant-$version"
     set -eou pipefail
-    # Create Build Dir
-    mkdir -p {{ builddir / 'isos' }}
+
+    if [ ! -d {{ builddir / 'isos' }} ]; then
+        echo Creating build directory {{ builddir / 'isos' }}
+        mkdir -p {{ builddir / 'isos' }}
+    elif [ -e {{ builddir / 'isos/$variant-$version.iso' }} ]; then
+        echo Removing existing ISO image {{ builddir / 'isos/$variant-$version.iso' }}
+        rm {{ builddir / 'isos/$variant-$version.iso' }}
+    fi
 
     # Process Template
     cp BIB/iso.toml {{ builddir / '$variant-$version.toml' }}
@@ -615,6 +623,10 @@ build-iso $variant="" $version="" $registry="": start-machine
     # Pull Bootc Image Builder
     {{ podman-remote }} pull --retry 3 {{ bootc-image-builder }}
 
+    if [ ! -d {{ builddir / '$variant-$version' }} ]; then
+        mkdir {{ builddir / '$variant-$version' }}
+    fi
+
     # Build ISO
     {{ podman-remote }} run \
         --rm \
@@ -630,6 +642,9 @@ build-iso $variant="" $version="" $registry="": start-machine
         --type anaconda-iso \
         --use-librepo=True \
         $fq_name
+
+    mv {{ builddir / '$variant-$version/bootiso/install.iso' }} {{ builddir / 'isos/$variant-$version.iso' }}
+    rm -rf {{ builddir / '$variant-$version' }}
 
 # Run ISO
 [group('BIB')]
