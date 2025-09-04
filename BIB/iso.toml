@@ -1,10 +1,11 @@
 [customizations.installer.kickstart]
 contents = """
-text
+mediacheck
+graphical
+skipx
 network --device=link --onboot=True
-autopart --type=lvm --fstype=xfs --noswap
-rootpw --lock
-bootloader --append="console=tty0 console=ttyS0,115200"
+autopart --fstype=xfs --noswap
+bootloader --sdboot --append="console=tty0 console=ttyS0,115200"
 
 %post --erroronfail
 bootc switch --mutate-in-place<SIGPOLICY> --transport registry <URL>
@@ -17,11 +18,11 @@ enable = [
   "org.fedoraproject.Anaconda.Modules.Localization",
   "org.fedoraproject.Anaconda.Modules.Storage",
   "org.fedoraproject.Anaconda.Modules.Timezone",
-  "org.fedoraproject.Anaconda.Modules.Users",
   "org.fedoraproject.Anaconda.Modules.Network",
 ]
 disable = [
+  "org.fedoraproject.Anaconda.Modules.Users",
   "org.fedoraproject.Anaconda.Modules.Security",
   "org.fedoraproject.Anaconda.Modules.Services",
-  "org.fedoraproject.Anaconda.Modules.Subscription"
+  "org.fedoraproject.Anaconda.Modules.Subscription",
 ]

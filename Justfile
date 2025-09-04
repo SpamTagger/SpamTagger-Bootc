@@ -489,7 +489,7 @@ convert-disk $variant="" $version="" $diskformat="":
             echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$image_name-$version-$variant\" not built" >&2 && exit 1
         fi
     fi
-    if [ "$diskformat" == "ami" ] || [ "$diskformat" == "ova" ] || [ "$diskformat" == "all" ]; then
+    if [ "$diskformat" == "vmdk" || [ "$diskformat" == "all" ]; then
         if [ -f "{{ builddir / 'disks/$variant-$version.vmdk' }}" ]; then
             echo Removing existing disk image {{ builddir / 'disks/$variant-$version.vmdk' }}
             rm -f {{ builddir / 'disks/$variant-$version.vmdk' }}
@@ -515,11 +515,12 @@ bundle-vm $variant="" $version="" $vmformat="":
     {{ get-names }}
     set -ou pipefail
 
-    if [ ! -d {{ builddir / 'vms' }} ]; then
-        mkdir {{ builddir / 'vms' }}
+    if [ ! -d {{ builddir / 'bundles' }} ]; then
+        mkdir {{ builddir / 'bundles' }}
     fi
     if [ "$vmformat" == "all" ]; then
         {{ just }} bundle-vm $variant $version kvm
+        {{ just }} bundle-vm $variant $version ami
         {{ just }} bundle-vm $variant $version ova
         {{ just }} bundle-vm $variant $version vhdx
     else
@@ -536,14 +537,14 @@ bundle-vm $variant="" $version="" $vmformat="":
                 echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$version-$variant.$DISK\" does not exist" >&2 && exit 1
             fi
         fi
-        if [ -f {{ builddir / 'vms/$variant-$version.$vmformat.7z' }}.$DISK ]; then
-            echo Removing existing VM bundle {{ builddir / 'vms/$variant-$version-$vmformat.7z' }}
-            rm {{ builddir / 'vms/$variant-$version-$vmformat.7z' }}
+        if [ -f {{ builddir / 'bundles/$variant-$version.$vmformat.zip' }}.$DISK ]; then
+            echo Removing existing VM bundle {{ builddir / 'bundles/$variant-$version-$vmformat.zip' }}
+            rm {{ builddir / 'bundles/$variant-$version-$vmformat.zip' }}
         fi
         echo Compressing $vmformat
-        7z a {{ builddir / 'vms/$variant-$version-$vmformat.7z' }} {{ builddir / 'disks/$variant-$version' }}.$DISK
+        zip -r -j {{ builddir / 'bundles/$variant-$version-$vmformat.zip' }} {{ builddir / 'disks/$variant-$version' }}.$DISK BIB/vm-files/$vmformat/*
         echo Generating checksum for $vmformat
-        sha256sum {{ builddir / 'vms/$variant-$version-$vmformat.7z' }} > {{ builddir / 'vms/$variant-$version-$vmformat.7z.sha256' }}
+        sha256sum {{ builddir / 'bundles/$variant-$version-$vmformat.zip' }} > {{ builddir / 'bundles/$variant-$version-$vmformat.zip.sha256' }}
     fi
 
 [group('BIB')]
@@ -600,6 +601,27 @@ build-iso $variant="" $version="" $registry="": start-machine
         rm {{ builddir / 'isos/$variant-$version.iso' }}
     fi
 
+    if [ -d {{ builddir / 'product' }} ]; then
+        rm -rf {{ builddir / 'product' }}
+    fi
+
+    declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
+    TIMESTAMP="${gen_tags["TIMESTAMP"]}"
+
+    cp -r BIB/anaconda/product {{ builddir / 'product' }}
+    cd {{ builddir / 'product' }}
+    if [ "$variant" == 'spamtagger' ]; then
+      sed -i "s/<VARIANT>/SpamTagger/" .buildstamp
+    else
+      sed -i "s/<VARIANT>/SpamTagger Plus/" .buildstamp
+    fi
+    sed -i "s/<VERSION>/$version/" .buildstamp
+    sed -i "s/<TAG>/$TIMESTAMP/" .buildstamp
+    find . | cpio -c -o | gzip -9cv >../product.img
+    cd -
+    mv {{ builddir /'product.img' }} ./
+    #rm -rf {{ builddir / 'product' }}
+
     # Process Template
     cp BIB/iso.toml {{ builddir / '$variant-$version.toml' }}
     sed -i "s|<URL>|$fq_name|" {{ builddir / '$variant-$version.toml' }}
@@ -644,7 +666,7 @@ build-iso $variant="" $version="" $registry="": start-machine
         $fq_name
 
     mv {{ builddir / '$variant-$version/bootiso/install.iso' }} {{ builddir / 'isos/$variant-$version.iso' }}
-    rm -rf {{ builddir / '$variant-$version' }}
+    rm -rf {{ builddir / '$variant-$version' }} product.img
 
 # Run ISO
 [group('BIB')]

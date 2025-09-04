@@ -1,0 +1,27 @@
+/* vendor-specific colors/images */
+
+@define-color bg #323232;
+
+/* logo and sidebar classes for RHEL */
+
+.logo-sidebar {
+  background-color: @bg;
+}
+
+.logo {
+  background-image: url('/usr/share/anaconda/pixmaps/sidebar-logo.png');
+  background-position: 50% 20px;
+  background-repeat: no-repeat;
+  background-color: transparent;
+}
+
+AnacondaSpokeWindow #nav-box {
+  background-color: @bg;
+  background-image: url('/usr/share/anaconda/pixmaps/topbar-bg.png');
+  background-repeat: no-repeat;
+  color: white;
+}
+
+AnacondaSpokeWindow #layout-indicator {
+  color: black;
+}
