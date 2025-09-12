@@ -50,6 +50,9 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
 
+      - name: Test Image
+        run: just test
+
       - name: Push and Sign Image
         if: github.event_name != 'pull_request'
         run: |
