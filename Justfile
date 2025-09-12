@@ -256,6 +256,21 @@ build-container $variant="" $version="":
     # Build Image
     {{ podman }} build -f container/Containerfile.in "${BUILD_ARGS[@]}" "${LABELS[@]}" "${TAGS[@]}" {{ justfile_dir() }}/container
 
+# Test Container
+
+alias test := test-container
+
+# Run Container Image
+[group('Container')]
+test-container $variant="" $version="":
+    #!/usr/bin/env bash
+    set -eou pipefail
+    {{ default-inputs }}
+    {{ get-names }}
+    {{ build-missing }}
+    echo "{{ style('warning') }}Running:{{ NORMAL }} {{ style('command') }}{{ just }} run -it --rm localhost/$image_name:$image_tag bash -l {{ NORMAL }}"
+    {{ podman }} run -it --rm "localhost/$image_name:$image_tag" prove /usr/spamtagger/tests/
+
 # HHD-Dev Rechunk Image
 [group('Container')]
 hhd-rechunk $variant="" $version="":
