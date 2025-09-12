@@ -11,11 +11,21 @@ dnf -y install --setopt=install_weak_deps=False \
   mariadb-server \
   mod_ssl \
   net-snmp \
-  net-snmp-devel \
+  net-snmp-perl-module \
   perl-DBD-MariaDB \
+  perl-Digest-SHA1 \
+  perl-Digest-HMAC \
+  perl-LDAP \
+  perl-MIME-tools \
   perl-Net-SNMP \
-  php
+  perl-Perl-Critic \
+  perl-Regexp-Common \
+  perl-SNMP_Session \
+  php \
+  rrdtool-perl
 # /*
+# net-snmp-devel \
+# net-snmp-perl-module \
 # Try getting all PHP dependencies through composer
 # php-bcmath \
 # php-common \
@@ -35,10 +45,9 @@ dnf -y install --setopt=install_weak_deps=False \
 
 # /* Missing, perhaps resolved my net-snmp
 # snmp-mibs-downloader
-# snmpd
 # */
 
-# /* The following Perl libraries were distributed in MailCleaner's '# ' directory
+# /* The following Perl libraries were distributed in MailCleaner's 'install/src/perl' directory
 # and were installed for the local Perl version with 'install/install_perl_libs.sh'.
 # We need to verify which of these dependencies still exist and source them from elsewhere,
 # prioritizing the CentOS repos, then CPAN
@@ -88,7 +97,6 @@ dnf -y install --setopt=install_weak_deps=False \
 # Net::CIDR
 # URI
 # Algorithm::SVM
-# Digest::SHA1
 # version
 # MIME::Lite
 # Module::Signature
@@ -101,7 +109,6 @@ dnf -y install --setopt=install_weak_deps=False \
 # IO::Socket::SSL
 # ExtUtils::MakeMaker
 # ExtUtils::ParseXS
-# Regexp::Common
 # Inline
 # Authen::Radius
 # NetSNMP::default_store
@@ -153,4 +160,18 @@ dnf -y install --setopt=install_weak_deps=False \
 # Digest::HMAC
 # ExtUtils::Constant
 # Geography::Countries
+#
+# New dependencies:
+# TOML::Tiny
 # */
+
+# /*
+# Install missing Perl dependencies from CPAN
+# */
+cpanm Mail::IMAPClient
+cpanm Mail::POP3Client
+cpanm RRDTool::OO
+cpanm IPC::Shareable
+cpanm IO::Interactive
+
+rm -rf ~/.cpan/build

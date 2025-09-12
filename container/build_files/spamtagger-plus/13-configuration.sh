@@ -50,3 +50,14 @@ cat etc/issue | sed "s/__PRETTY_NAME__/$PRETTY_NAME/" >/etc/issue
 # Set default root password 'STPassw0rd'
 # */
 sed -i 's/root:[^:]*:/root:$y$j9T$kfLbiAeBa5PuQAZtTqBph1$ufRc85kbALH5Eg.IhtZcoyoDZ92SZfJmdX9p22Qg1D5:/' /etc/shadow
+
+# /*
+# Temporarily create dummy configuration file to pass compile tests
+# */
+
+touch /etc/spamtagger.conf
+
+# /*
+# Clean up unnecessary files
+# */
+rm -rf /usr/spamtagger/.git*

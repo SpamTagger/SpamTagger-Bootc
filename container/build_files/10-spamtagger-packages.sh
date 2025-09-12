@@ -122,13 +122,6 @@ rm $VERSION
 # php-xmlrpc (provided by Zend)
 # */
 
-# /* Perl packages which are in source but don't have CentOS packages (get from cpan, probably):
-# perl-mail-imapclient # I think we actually only use Net::IMAP::Simple(::SSL)
-# perl-mail-pop3client # Net::Pop3 is in core, use it instead?
-# perl-net-ldap
-# perl-rrdtool-oo
-# */
-
 # /* Perl packages which are not in the source (probably in MailScanner or SpamAssassin)
 # perl-business-isbn
 # perl-config-yaml
