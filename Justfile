@@ -262,14 +262,15 @@ alias test := test-container
 
 # Run Container Image
 [group('Container')]
-test-container $variant="" $version="":
+test-container $variant="" $version="" $registry="":
     #!/usr/bin/env bash
     set -eou pipefail
+    : "${registry:=localhost}"
     {{ default-inputs }}
     {{ get-names }}
     {{ build-missing }}
-    echo "{{ style('warning') }}Running:{{ NORMAL }} {{ style('command') }}{{ just }} run -it --rm localhost/$image_name:$image_tag bash -l {{ NORMAL }}"
-    {{ podman }} run -it --rm "localhost/$image_name:$image_tag" prove /usr/spamtagger/tests/
+    echo "{{ style('warning') }}Running:{{ NORMAL }} {{ style('command') }}{{ just }} running tests in $registry/$image_name:$image_tag"
+    {{ podman }} run -it --rm "$registry/$image_name:$image_tag" prove /usr/spamtagger/tests/
 
 # HHD-Dev Rechunk Image
 [group('Container')]
