@@ -15,7 +15,7 @@ echo 'VARIANT="SpamTagger-Plus"' >>/usr/lib/os-release
 # Clone SpamTagger repo
 # */
 
-git clone https://github.com/SpamTagger/SpamTagger-Plus /usr/spamtagger
+git clone --recurse-submodules https://github.com/SpamTagger/SpamTagger-Plus /usr/spamtagger
 
 # /*
 # Anaconda installation files
