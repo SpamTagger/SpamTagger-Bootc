@@ -270,7 +270,7 @@ test-container $variant="" $version="" $registry="":
     {{ get-names }}
     {{ build-missing }}
     echo "{{ style('warning') }}Running:{{ NORMAL }} {{ style('command') }}{{ just }} running tests in $registry/$image_name:$image_tag"
-    {{ podman }} run -it --rm "$registry/$image_name:$image_tag" prove /usr/spamtagger/tests/
+    {{ podman }} run -it --rm "$registry/$image_name:$image_tag" /usr/spamtagger/tests/run_tests.sh
 
 # HHD-Dev Rechunk Image
 [group('Container')]
