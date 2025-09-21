@@ -1,17 +1,39 @@
 set ${CI:+-x} -euo pipefail
 
 # /*
-# Unique SpamTagger Plus packages
 # */
 dnf -y install --setopt=install_weak_deps=False \
+  bzip2 \
+  clamav \
+  clamav-unofficial-sigs \
   composer \
+  cronie \
+  crontabs \
+  distrobox \
+  dnsutils \
+  exim \
+  exim-greylist \
+  fail2ban \
+  git \
+  gzip \
   httpd \
-  mod_ssl \
+  ipset \
+  iputils \
+  kbd \
+  libspf2 \
+  links \
+  lsb-release \
+  lzma \
   mariadb \
   mariadb-server \
   mod_ssl \
   net-snmp \
   net-snmp-perl-module \
+  openssl \
+  openssh \
+  openssh-server \
+  open-vm-tools \
+  perl-App-cpanminus \
   perl-DBD-MariaDB \
   perl-Digest-SHA1 \
   perl-Digest-HMAC \
@@ -21,11 +43,164 @@ dnf -y install --setopt=install_weak_deps=False \
   perl-Perl-Critic \
   perl-Regexp-Common \
   perl-SNMP_Session \
+  perl-LWP-Protocol-https \
+  perl-PerlIO-gzip \
   php \
   rrdtool-perl
+  podman \
+  poppler-utils \
+  procps \
+  python-is-python3 \
+  pyzor \
+  qemu-guest-agent \
+  re2c \
+  rrdtool \
+  rrdtool-perl \
+  rsyslog \
+  rsync \
+  spamassassin \
+  systemd-container \
+  telnet \
+  tesseract \
+  ublue-os-signing \
+  usbutils \
+  vim \
+  wget \
+  wireguard-tools
+
 # /*
-# net-snmp-devel \
-# net-snmp-perl-module \
+# apply custom signing policy then disable ublue repo
+# */
+
+mv /etc/containers/policy.json /etc/containers/policy.json-upstream
+mv /usr/etc/containers/policy.json /etc/containers/
+rm -fr /usr/etc
+sed -i 's/ublue-os/spamtagger/' /etc/containers/policy.json
+dnf -y copr disable ublue-os/packages
+
+# /*
+# DCC doesn't have an official package, but is packaged by the OpenSuSE Build Service
+# */
+
+OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/AlmaLinux_10/x86_64/"
+VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc-[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
+wget $OBS_PATH$VERSION
+rpm -i $VERSION
+rm $VERSION
+
+# /* The following Perl libraries were distributed in MailCleaner's 'install/src/perl' directory or
+# were included in the list of debian packages but don't appear to be used within the current source
+# code. We need to verify which of these dependencies still exist and (eg. via MailScanner) and
+# download them via CPAN if we still need them.
+#
+# AI::Categorizer
+# AI::DecisionTree
+# Algorithm::NaiveBayes
+# Algorithm::SVM
+# Archive::Any::Lite
+# Archive::Zip
+# Archive::Zip::SimpleZip
+# Business::ISBN
+# Compress::Raw::Zlib
+# Compress::Zlib
+# config::YAML
+# Convert::TNEF
+# Crypt::DES
+# Crypt::OpenSSL::AES
+# Crypt::OpenSSL::Bignum
+# Crypt::OpenSSL::Random
+# Crypt::OpenSSL::RSA
+# Cwd
+# Data::Dump
+# Data::Validate::Domain
+# Date::Pcalc
+# DB_File
+# Digest
+# Digest::MD5
+# Digest::Nilsimsa
+# Digest::SHA
+# Encode::Detect
+# Error
+# ExtUtils::CBuilder
+# ExtUtils::Constant
+# ExtUtils::MakeMaker
+# ExtUtils::ParseXS
+# File::Spec
+# File::Temp
+# File::Which
+# Filesys::Df
+# Getopt::Long
+# Geography::Countries
+# HTML::Parser
+# HTML::Tagset
+# IMAP::Client
+# Inline
+# Inline::C
+# IO::Socket::IP
+# IO::Socket::SSL
+# IO::Compress
+# IO::Compress::Base
+# IO::Compress::Zlib
+# IO::String
+# IO::stringy
+# IO::Socket::INET6
+# IO::Socket::SSL
+# IP::Country
+# Log::Agent
+# Log::Log4perl
+# Mail::ClamAV
+# Mail::DomainKeys
+# Mail::SPF::Query
+# MLDBM
+# MLDBM::Sync
+# MIME::Base64
+# MIME::Lite
+# MIME::tools
+# Module::Signature
+# NetAddr::IP
+# Net::DNS::Resolver::Programmable
+# Net::Ident
+# Net::IMAP::Simple
+# Net::IMAP::Simple::SSL
+# NetSNMP::default_store
+# Net_SSLeay.pm
+# NTLM
+# OLE::Storage_Lite
+# OO.pm.patch
+# Parse::RecDescent
+# Pod::Escapes
+# Pod::Parser
+# Pod::Simple
+# Pod::Readme
+# podlators
+# PathTools
+# re2c
+# Scalar::List::Utils
+# Socket
+# Socket6
+# Statistics::Contingency
+# Storable
+# String::Approx
+# Sys::SigAction
+# Sys::Hostname::Long
+# Tie::Cache
+# Time::HiRes
+# Time::Progress
+# TimeDate
+# Test::Simple
+# Test::Harness
+# URI::imap
+# URI::Find::Rule
+# version
+# XML::Parser
+# */
+
+# /* Possibly replaced by perl-Razor-Agent, but would likely need an updated module.
+# razor
+# */
+
+# /*
+# /*
 # Try getting all PHP dependencies through composer
 # php-bcmath \
 # php-common \
@@ -41,132 +216,40 @@ dnf -y install --setopt=install_weak_deps=False \
 # php-soap \
 # php-xml \
 # php-pecl-zip
-# */
-
-# /* Missing, perhaps resolved my net-snmp
-# snmp-mibs-downloader
-# */
-
-# /* The following Perl libraries were distributed in MailCleaner's 'install/src/perl' directory
-# and were installed for the local Perl version with 'install/install_perl_libs.sh'.
-# We need to verify which of these dependencies still exist and source them from elsewhere,
-# prioritizing the CentOS repos, then CPAN
 #
-# Digest::MD5
-# Filesys::Df
-# Net::IMAP::Simple::SSL
-# Mail::DomainKeys
-# Pod::Parser
-# Net::DNS
-# Pod::Simple
-# Parse::RecDescent
-# PathTools
-# Mail::SPF
-# Module::Build
-# MIME::Base64
-# File::Spec
-# MailTools
-# Mail::POP3Client
-# Crypt::OpenSSL::Random
-# XML::Parser
-# Log::Log4perl
-# re2c
-# Net::IP
-# Time::Progress
-# NetAddr::IP
-# Compress::Zlib
-# Time::HiRes
-# MLDBM::Sync
-# Pod::Readme
-# Storable
-# Crypt::OpenSSL::AES
-# Statistics::Contingency
-# IO::Socket::IP
-# Digest
-# Mail::ClamAV
-# NTLM
-# DBD::SQLite
-# Algorithm::NaiveBayes
-# Pod::Escapes
-# Log::Agent
-# OLE::Storage_Lite
-# MLDBM
-# HTML::Parser
-# Socket6
-# Compress::Raw::Zlib
-# Net::CIDR
-# URI
-# Algorithm::SVM
-# version
-# MIME::Lite
-# Module::Signature
-# File::Temp
-# Net::DNS::Resolver::Programmable
-# Crypt::OpenSSL::Bignum
-# MIME::tools
-# DBD::mysql
-# Net_SSLeay.pm
-# IO::Socket::SSL
-# ExtUtils::MakeMaker
-# ExtUtils::ParseXS
-# Inline
-# Authen::Radius
-# NetSNMP::default_store
-# HTML::Tagset
-# DBI
-# IO::Socket::INET6
-# Net::SNMP
-# URI::imap
-# URI::Find::Rule
-# ExtUtils::CBuilder
-# Convert::TNEF
-# TimeDate
-# String::Approx
-# Digest::SHA
-# AI::DecisionTree
-# Sys::Hostname::Long
-# Scalar::List::Utils
-# RRDTool::OO
-# IP::Country
-# Encode::Detect
-# AI::Categorizer
-# Cwd
-# Socket
-# OO.pm.patch
-# IO::stringy
-# Date::Pcalc
-# File::Which
-# DB_File
-# podlators
-# Mail::DKIM
-# Net::Ident
-# IMAP::Client
-# Sys::SigAction
-# Archive::Zip
-# Crypt::OpenSSL::RSA
-# Convert::BinHex
-# IO::Compress::Zlib
-# Getopt::Long
-# Error
-# Tie::Cache
-# Crypt::DES
-# Test::Simple
-# IO::Compress::Base
-# Net::CIDR::Lite
-# Net::IMAP::Simple
-# Test::Harness
-# Mail::SPF::Query
-# Digest::Nilsimsa
-# Digest::HMAC
-# ExtUtils::Constant
-# Geography::Countries
-#
-# New dependencies:
-# TOML::Tiny
+# Missing php modules
+# php-imap
+# php-mcrypt
+# php-xmlrpc (provided by Zend)
 # */
 
 # /*
 # Install missing Perl dependencies from CPAN
+# GreylistD doesn't have an official package. Investigate built-in greylisting configuration provided by exim-greaylist:
+# https://github.com/Exim/exim/wiki/SimpleGreylisting
+# Otherwise, greylistd is just a python program, so we can fetch from GitHub and write a simple installer.
+# git clone https://github.com/SpamTagger/greylistd
+# */
+
+# /*
+# missing Apache modules
+# libapache2-mpm-itk (or something like (mod_mpm-itx) doesn't exist. Other MPM modules probably exist, but I don't think we actually need to run multilple vhosts, so this is not needed.
+# */
+
+# /*
+# Dependencies for custom Exim package. Test what features are missing from CentOS package before compiling our own.
+# libssl3 (now openssl-devel?) \
+# libpcre3
+# */
+
+# /* Pending acceptance for EPEL 10 https://bodhi.fedoraproject.org/updates/?packages=pwgen
+# Maybe just generate our own random password (used in install/installer.pl).
+#
+# pwgen
+# */
+
+# /* Missing, perhaps resolved my net-snmp
+# snmp-mibs-downloader
 # */
 cpanm Mail::IMAPClient
 cpanm Mail::POP3Client
