@@ -1,8 +1,18 @@
 set ${CI:+-x} -euo pipefail
 
 # /*
+# Enable UBlue OS repo for image signing
 # */
-dnf -y install --setopt=install_weak_deps=False \
+
+dnf -y copr enable ublue-os/packages
+
+# /*
+# Common SpamTagger / SpamTagger Plus packages
+# */
+
+dnf -y install --setopt=install_weak_deps=False --allowerasing \
+  bind \
+  bogofilter \
   bzip2 \
   clamav \
   clamav-unofficial-sigs \
