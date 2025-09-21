@@ -59,5 +59,12 @@ touch /etc/spamtagger.conf
 
 # /*
 # Clean up unnecessary files
+#
+# * Git history is available elsewhere, we don't need to ship it with production releases
+# * Zend comes bundled with a lot of extras, but we only need the actual libraries
+#
 # */
 rm -rf /usr/spamtagger/.git*
+mv /usr/spamtagger/www/vendor/Zend /usr/spamtagger/www/vendor/Zend.git
+mv /usr/spamtagger/www/vendor/Zend.git/library/Zend /usr/spamtagger/www/vendor/Zend
+rm -rf /usr/spamtagger/www/vendor/Zend.git
