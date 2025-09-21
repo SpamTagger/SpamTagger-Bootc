@@ -206,6 +206,25 @@ rm $VERSION
 # */
 
 # /*
+# Build our own Perl. The one in the repositories has over 100MB of dependencies.
+#
+# TODO: Use App::StaticPerl to build a minimal Perl and bundle in all dependencies
+#
+# */
+
+cd /tmp
+git clone --depth=1 https://github.com/Perl/perl5
+cd perl5
+git fetch --tags
+PERLVERSION=$(dnf list perl | tail -n 1 | sed 's/[^:]*:\([^\-]*\)\-.*/\1/')
+git checkout v$PERLVERSION
+./configure.gnu
+make
+make test
+make install
+cd ..
+rm -rf perl5
+
 # /*
 # Try getting all PHP dependencies through composer
 # php-bcmath \
@@ -263,4 +282,90 @@ cpanm RRDTool::OO
 cpanm IPC::Shareable
 cpanm IO::Interactive
 
+# /*
+# Remove packages which are not useful in mail filtering context
+#
+# TODO: `wget` is mostly redundant to `curl`, but the latter is required by the system.
+# `wget is used in the application code but could be removed in favour of `curl` in bash and `LWP` in Perl
+# */
+
+dnf remove -y \
+  amd-gpu-firmware \
+  amd-ucode-firemware \
+  avahi-libs \
+  bash-completion \
+  c-ares \
+  checkpolicy \
+  cirrus-audio-firmware \
+  console-login-helper-messages \
+  cryptsetup \
+  cyrus-sasl-gssapi \
+  dmidecode \
+  dosfstools \
+  duktape \
+  dwz \
+  e2fsprogs \
+  e2fsprogs-libs \
+  epel-release \
+  ethtool \
+  expatprogs \
+  flashrom \
+  flatpak-session-helper \
+  gawk-all-langpacks \
+  gss-proxy \
+  hwdata \
+  insights-core-selinux \
+  intel-audio-firmware \
+  intel-gpu-firmware \
+  jq \
+  kpartx \
+  lcms2 \
+  linux-firmware-whence \
+  make \
+  man-db \
+  man-pages \
+  mdadm \
+  memstrack \
+  microcode_ctl \
+  nfs-utils \
+  nss* \
+  nvme-cli \
+  ocaml-srpm-macros \
+  openblas-srpm-macros \
+  package-notes-srpm-macros \
+  perl \
+  perldoc \
+  perl-App-cpanminus \
+  perl-LWP-Protocol-https \
+  perl-Test-Manifest \
+  perl-Test-Pod \
+  perl-Test-Pod-Coverage \
+  poppler \
+  pinentry \
+  pkgconf \
+  pkgconf-m4 \
+  pyproject-srpm-macros \
+  python-unversioned-command \
+  qt6-srpm-macros \
+  quota-nls \
+  re2c \
+  redhat-rpm-config \
+  rpcbind \
+  rust-toolset-srpm-macros \
+  samba-client-libs \
+  samba-common \
+  samba-common-libs \
+  sequoia-sq \
+  socat \
+  sos \
+  sssd-* \
+  sudo-python-plugin \
+  toolbox \
+  vim-* \
+  xxd \
+  yggdrasil \
+  yggdrasil-worker-package-manager
+
+dnf clean all
+rm -rf /var/cache/dnf
 rm -rf ~/.cpan/build
