@@ -45,18 +45,14 @@ dnf -y install --setopt=install_weak_deps=False --allowerasing \
   open-vm-tools \
   perl-App-cpanminus \
   perl-DBD-MariaDB \
-  perl-Digest-SHA1 \
+  perl-Digest-SHA \
   perl-Digest-HMAC \
   perl-LDAP \
-  perl-MIME-tools \
   perl-Net-SNMP \
-  perl-Perl-Critic \
-  perl-Regexp-Common \
-  perl-SNMP_Session \
   perl-LWP-Protocol-https \
   perl-PerlIO-gzip \
+  perl-SNMP_Session \
   php \
-  rrdtool-perl
   podman \
   poppler-utils \
   procps \
