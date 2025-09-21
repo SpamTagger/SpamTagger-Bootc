@@ -11,13 +11,6 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
 #include "build_files/01-common.sh"
-#include "build_files/02-centos.sh"
-#include "build_files/02-spamtagger.sh"
-#ifdef PLUS
-#include "build_files/spamtagger-plus/02-spamtagger.sh"
-#else
-#include "build_files/spamtagger/02-spamtagger.sh"
-#endif /* PLUS */
 ostree container commit
 RUNEOF
 
@@ -27,7 +20,6 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
-#include "build_files/10-spamtagger-packages.sh"
 #ifdef PLUS
 #include "build_files/spamtagger-plus/10-packages.sh"
 #else

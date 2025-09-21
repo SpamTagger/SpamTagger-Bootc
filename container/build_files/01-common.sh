@@ -2,6 +2,12 @@
 #shellcheck disable=SC2174,SC2114
 # */
 
+# /*
+# This file is a combination of 01-common.sh and centos/02-centos.sh`
+# in the Cayo repository, since we aren't building for Fedoar.
+# Differences will be noted in comments.
+# */
+
 set ${CI:+-x} -euo pipefail
 
 # /*
@@ -21,7 +27,7 @@ rm -rf /opt /usr/local
 ln -sf var/opt /opt
 
 # /*
-# remove any wifi support from base
+# remove any wifi support and subscription manager
 # */
 dnf -y remove \
   atheros-firmware \
@@ -32,16 +38,11 @@ dnf -y remove \
   mt7xxx-firmware \
   nxpwireless-firmware \
   realtek-firmware \
-  tiwilink-firmware
-
-# /*
-# packages which are more or less what we'd find in CoreOS
-# other than ignition, coreos-installer, moby-engine, etc
-# */
-dnf -y install --setopt=install_weak_deps=False \
-  git-core \
-  rsync \
-  ssh-key-dir
+  tiwilink-firmware \
+  libdnf-plugin-subscription-manager \
+  python3-subscription-manager-rhsm \
+  subscription-manager \
+  subscription-manager-rhsm-certificates
 
 # /*
 # use CoreOS' generator for emergency/rescue boot
@@ -66,3 +67,30 @@ sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/bootc update --quiet|' /usr/lib/syste
 sed -i 's|^OnUnitInactiveSec=.*|OnUnitInactiveSec=7d\nPersistent=true|' /usr/lib/systemd/system/bootc-fetch-apply-updates.timer
 sed -i 's|#AutomaticUpdatePolicy.*|AutomaticUpdatePolicy=stage|' /etc/rpm-ostreed.conf
 sed -i 's|#LockLayering.*|LockLayering=true|' /etc/rpm-ostreed.conf
+
+# /*
+# enable CRB, EPEL and other repos
+# */
+dnf config-manager --set-enabled crb
+dnf -y install epel-release
+dnf -y upgrade epel-release
+
+# /*
+# Install Packages
+# */
+dnf -y --setopt=install_weak_deps=False install \
+  python3-dnf-plugin-versionlock \
+  systemd-resolved \
+  ssh-key-dir
+
+# /*
+# Ensure systemd-resolved is enabled
+# */
+cat >/usr/lib/systemd/system-preset/91-cayo-resolved.preset <<'EOF'
+enable systemd-resolved.service
+EOF
+cat >/usr/lib/tmpfiles.d/cayo-resolved.conf <<'EOF'
+L /etc/resolv.conf - - - - ../run/systemd/resolve/stub-resolv.conf
+EOF
+
+systemctl preset systemd-resolved.service
