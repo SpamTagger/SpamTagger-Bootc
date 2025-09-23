@@ -120,10 +120,12 @@ rm $VERSION
 # Archive::Any::Lite
 # Archive::Zip
 # Archive::Zip::SimpleZip
+# BSD::Resource
 # Business::ISBN
 # Compress::Raw::Zlib
 # Compress::Zlib
 # config::YAML
+# Convert::BinHex
 # Convert::TNEF
 # Crypt::DES
 # Crypt::OpenSSL::AES
@@ -151,6 +153,7 @@ rm $VERSION
 # Filesys::Df
 # Getopt::Long
 # Geography::Countries
+# GeoIP2
 # HTML::Parser
 # HTML::Tagset
 # IMAP::Client
