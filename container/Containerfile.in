@@ -70,6 +70,12 @@ RUN --mount=type=cache,dst=/var/cache \
     bash <<'RUNEOF'
 /* Remove unnecessary files/repositories/etc. */
 #include "build_files/98-cleanup.sh"
+/* Remove packages and files not needed for specific version */
+#ifdef PLUS
+#include "build_files/spamtagger-plus/98-cleanup.sh"
+#else
+#include "build_files/spamtagger/98-cleanup.sh"
+#endif /* PLUS */
 ostree container commit
 RUNEOF
 
