@@ -26,23 +26,6 @@ mkdir -p /var/opt
 rm -rf /opt /usr/local
 ln -sf var/opt /opt
 
-# /*
-# remove any wifi support and subscription manager
-# */
-dnf -y remove \
-  atheros-firmware \
-  brcmfmac-firmware \
-  iwlegacy-firmware \
-  iwlwifi-dvm-firmware \
-  iwlwifi-mvm-firmware \
-  mt7xxx-firmware \
-  nxpwireless-firmware \
-  realtek-firmware \
-  tiwilink-firmware \
-  libdnf-plugin-subscription-manager \
-  python3-subscription-manager-rhsm \
-  subscription-manager \
-  subscription-manager-rhsm-certificates
 
 # /*
 # use CoreOS' generator for emergency/rescue boot
@@ -71,6 +54,7 @@ sed -i 's|#LockLayering.*|LockLayering=true|' /etc/rpm-ostreed.conf
 # /*
 # enable CRB, EPEL and other repos
 # */
+dnf -y remove subscription-manager subscription-manager-rhsm-certificates
 dnf config-manager --set-enabled crb
 dnf -y install epel-release
 dnf -y upgrade epel-release
