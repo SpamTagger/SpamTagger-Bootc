@@ -1,20 +1,16 @@
 # /*
-#shellcheck disable=SC2114,SC2174
+#shellcheck disable=SC2174,SC2114
 # */
 
 set ${CI:+-x} -euo pipefail
 
-# /*
-# Cleanup /run/build_files
-# */
-rm -rf /run/build_files
+setterm --foreground green
+echo "#####################"
+echo "# Finalizing image..."
+echo "#####################"
+setterm --foreground default
 
-# /*
-# Make Sure /tmp and /var are in proper state
-# */
-rm -rf /tmp
-rm -rf /var
-mkdir -m 1777 /tmp
-mkdir -m 1777 -p /var/tmp
-
+setterm --foreground blue
+echo "# Creating OSTree commit..."
+setterm --foreground default
 ostree container commit

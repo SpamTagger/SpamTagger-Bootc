@@ -1,46 +1,37 @@
 # /*
-#shellcheck disable=SC2174
+#shellcheck disable=SC2174,SC2114
 # */
 
-set -xeuo pipefail
+set ${CI:+-x} -euo pipefail
 
-# /*
-# Unique SpamTagger actions
-# */
+setterm --foreground green
+echo "################################"
+echo "# Configuring SpamTagger-Plus..."
+echo "################################"
+setterm --foreground default
 
+setterm --foreground blue
+echo "# Cloning SpamTagger and Zend..."
+setterm --foreground default
+git clone --recurse-submodules --depth=1 https://github.com/SpamTagger/SpamTagger-Plus /usr/spamtagger
+
+setterm --foreground blue
+echo "# Cleaning up repo files..."
+setterm --foreground default
+rm -rf /usr/spamtagger/.git*
+mv /usr/spamtagger/www/vendor/Zend /usr/spamtagger/www/vendor/Zend.git
+mv /usr/spamtagger/www/vendor/Zend.git/library/Zend /usr/spamtagger/www/vendor/Zend
+rm -rf /usr/spamtagger/www/vendor/Zend.git
+
+setterm --foreground blue
+echo "# Updating os-release..."
+setterm --foreground default
 sed -i 's|^BUG_REPORT_URL=.*|BUG_REPORT_URL="https://github.com/SpamTagger/SpamTagger-Plus/issues"|' /usr/lib/os-release
 echo 'VARIANT="SpamTagger-Plus"' >>/usr/lib/os-release
 
-# /*
-# Clone SpamTagger repo
-# */
-
-git clone --recurse-submodules https://github.com/SpamTagger/SpamTagger-Plus /usr/spamtagger
-
-# /*
-# Anaconda installation files
-# */
-
-if [ ! -d /etc/anaconda/conf.d ]; then
-  mkdir -p /etc/anaconda/conf.d
-fi
-cp /usr/spamtagger/install/anaconda/conf.d/spamtagger-plus.conf /etc/anaconda/conf.d/
-
-# /*
-#if [ ! -d /etc/anaconda/post-scripts ]; then
-#mkdir -p /etc/anaconda/post-scripts
-#fi
-#cp /usr/spamtagger/install/anaconda/post-scripts/spamtagger-plus.ks /etc/anaconda/conf.d/
-# */
-
-if [ ! -d /etc/anaconda/profile.d ]; then
-  mkdir -p /etc/anaconda/profile.d
-fi
-cp /usr/spamtagger/install/anaconda/profile.d/spamtagger-plus.conf /etc/anaconda/profile.d/
-
-# /*
-# Apply SpamTagger installation to rootfs
-# */
+setterm --foreground blue
+echo "# Updating /etc/issue..."
+setterm --foreground default
 
 cd /usr/spamtagger
 PRETTY_NAME="$(grep PRETTY_NAME /etc/os-release | cut -d '"' -f 2)"
@@ -64,7 +55,21 @@ touch /etc/spamtagger.conf
 # * Zend comes bundled with a lot of extras, but we only need the actual libraries
 #
 # */
-rm -rf /usr/spamtagger/.git*
-mv /usr/spamtagger/www/vendor/Zend /usr/spamtagger/www/vendor/Zend.git
-mv /usr/spamtagger/www/vendor/Zend.git/library/Zend /usr/spamtagger/www/vendor/Zend
-rm -rf /usr/spamtagger/www/vendor/Zend.git
+
+setterm --foreground blue
+echo "# Applying Anaconda installer configuration..."
+setterm --foreground default
+if [ ! -d /etc/anaconda/conf.d ]; then
+  mkdir -p /etc/anaconda/conf.d
+fi
+cp /usr/spamtagger/install/anaconda/conf.d/spamtagger-plus.conf /etc/anaconda/conf.d/
+# /*
+#if [ ! -d /etc/anaconda/post-scripts ]; then
+#mkdir -p /etc/anaconda/post-scripts
+#fi
+#cp /usr/spamtagger/install/anaconda/post-scripts/spamtagger-plus.ks /etc/anaconda/conf.d/
+# */
+if [ ! -d /etc/anaconda/profile.d ]; then
+  mkdir -p /etc/anaconda/profile.d
+fi
+cp /usr/spamtagger/install/anaconda/profile.d/spamtagger-plus.conf /etc/anaconda/profile.d/

@@ -1,15 +1,26 @@
-set ${CI:+-x} -euo pipefail
-
 # /*
-# Enable UBlue OS repo for image signing
+#shellcheck disable=SC2174,SC2114
 # */
 
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "########################################"
+echo "# Installing SpamTagger-Plus packages..."
+echo "########################################"
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Enabling UBlue OS repository..."
+setterm --foreground default
 dnf -y copr enable ublue-os/packages
 
 # /*
-# Common SpamTagger / SpamTagger Plus packages
+# TODO: `razor` is not provided as a CentOS package (but was a Debian package). Investigate if this can be satisfied by `perl-Razor-Agent` or if just `Mail::SpamAssassin::Plugin::Razor2` is enough.
 # */
-
+setterm --foreground blue
+echo "# Installing all system and build packages..."
+setterm --foreground default
 dnf -y install --setopt=install_weak_deps=False --allowerasing \
   bind \
   bogofilter \
@@ -74,20 +85,23 @@ dnf -y install --setopt=install_weak_deps=False --allowerasing \
   wget \
   wireguard-tools
 
-# /*
-# apply custom signing policy then disable ublue repo
-# */
-
+setterm --foreground blue
+echo "# Applying custom signing policy..."
+setterm --foreground default
 mv /etc/containers/policy.json /etc/containers/policy.json-upstream
 mv /usr/etc/containers/policy.json /etc/containers/
 rm -fr /usr/etc
 sed -i 's/ublue-os/spamtagger/' /etc/containers/policy.json
+
+setterm --foreground blue
+echo "# Disabling UBlue OS repository..."
+setterm --foreground default
+dnf remove -y ublue-os-signing
 dnf -y copr disable ublue-os/packages
 
-# /*
-# DCC doesn't have an official package, but is packaged by the OpenSuSE Build Service
-# */
-
+setterm --foreground blue
+echo "# Installing DCC from OBS..."
+setterm --foreground default
 OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/AlmaLinux_10/x86_64/"
 VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc-[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
 wget $OBS_PATH$VERSION
