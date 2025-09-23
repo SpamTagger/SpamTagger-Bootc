@@ -10,10 +10,10 @@ echo "# Cleaning up build..."
 echo "######################"
 setterm --foreground default
 
+KERNEL_VERSION="$(rpm -q --queryformat="%{EVR}.%{ARCH}" kernel-core)"
 setterm --foreground blue
 echo "# Bundling $KERNEL_VERSION..."
 setterm --foreground default
-KERNEL_VERSION="$(rpm -q --queryformat="%{EVR}.%{ARCH}" kernel-core)"
 export DRACUT_NO_XATTR=1
 /usr/bin/dracut --no-hostonly --kver "$KERNEL_VERSION" --reproducible --zstd -v --add ostree -f "/lib/modules/$KERNEL_VERSION/initramfs.img"
 chmod 0600 /lib/modules/"$KERNEL_VERSION"/initramfs.img
@@ -21,8 +21,6 @@ chmod 0600 /lib/modules/"$KERNEL_VERSION"/initramfs.img
 setterm --foreground blue
 echo "# Removing additional kernels..."
 setterm --foreground default
-# */
-KERNEL_VERSION="$(rpm -q kernel-core --queryformat '%{EVR}.%{ARCH}')"
 kernel_dirs=("$(ls -1 /usr/lib/modules)")
 if [[ ${#kernel_dirs[@]} -gt 1 ]]; then
   for kernel_dir in "${kernel_dirs[@]}"; do
