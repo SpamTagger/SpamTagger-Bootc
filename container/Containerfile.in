@@ -28,6 +28,15 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
+/* Generate version-specific module list for CPAN */
+#ifdef PLUS
+#include "build_files/spamtagger-plus/10-cpan.sh"
+#else
+#include "build_files/spamtagger/10-cpan.sh"
+#endif /* PLUS */
+/* Install staticperl with CPAN module bundles */
+#include "build_files/10-perl.sh"
+/* Install version-specific packages */
 #ifdef PLUS
 #include "build_files/spamtagger-plus/10-packages.sh"
 #else
