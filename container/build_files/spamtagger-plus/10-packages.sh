@@ -54,15 +54,6 @@ dnf -y install --setopt=install_weak_deps=False --allowerasing \
   openssh \
   openssh-server \
   open-vm-tools \
-  perl-App-cpanminus \
-  perl-DBD-MariaDB \
-  perl-Digest-SHA \
-  perl-Digest-HMAC \
-  perl-LDAP \
-  perl-Net-SNMP \
-  perl-LWP-Protocol-https \
-  perl-PerlIO-gzip \
-  perl-SNMP_Session \
   php \
   podman \
   poppler-utils \
@@ -108,10 +99,91 @@ wget $OBS_PATH$VERSION
 rpm -i $VERSION
 rm $VERSION
 
-# /* The following Perl libraries were distributed in MailCleaner's 'install/src/perl' directory or
+# /*
+# TODO: Use App::StaticPerl to build a minimal Perl and bundle in all dependencies
+# I'm experimenting with bundling these into a staticperl build in 10-perl.sh instead
+#
+# CPAN_TAR_OPTIONS='--no-same-owner' STATICPERLRC=/usr/spamtagger/etc/staticperlrc /tmp/staticperl mkbundle -v --strip ppi --incglob '/usr/spamtagger/bin/*' --incglob '/usr/spamtagger/lib/*' --incglob '/usr/spamtagger/scripts/*' --incglob '/usr/spamtagger/tests/*'
+#
+# Otherwise we can build our own Perl as follows.
+# These methods are of interest because CentOS's Perl comes with at least 100MB of extra dependencies.
+#
+# cd /tmp
+# git clone --depth=1 https://github.com/Perl/perl5
+# cd perl5
+# git fetch --tags
+# git checkout v$PERLVERSION
+# ./configure.gnu
+# make
+# make test
+# make install
+# cd ..
+# rm -rf perl5
+# TODO: `perl-Net-CIDR-Lite` should be redundant to `perl-Net-CIDR`
+#
+# If this doesn't work out then the following dependencies are available
+#
+# perl-App-cpanminus \
+# perl-Authen-Radius \
+# perl-Data-Validate-IP \
+# perl-Date-Calc \
+# perl-DateTime \
+# perl-DBD-MariaDB \
+# perl-DBD-SQLite \
+# perl-DBI \
+# perl-Devel-Size \
+# perl-Digest-HMAC \
+# perl-Digest-SHA \
+# perl-Dumpvalue \
+# perl-Env \
+# perl-ExtUtils-MakeMaker \
+# perl-File-Touch \
+# perl-FindBin \
+# perl-IPC-Run \
+# perl-IPC-Run3 \
+# perl-LDAP \
+# perl-Log-Log4perl \
+# perl-Mail-DKIM \
+# perl-Mail-tools \
+# perl-Math-Int128 \
+# perl-Module-Load-Conditional \
+# perl-Net-CIDR \
+# perl-Net-CIDR-Lite \
+# perl-Net-DNS \
+# perl-Net-DNS-Resolver \
+# perl-Net-HTTP \
+# perl-Net-IP \
+# perl-Net-SNMP \
+# perl-Net-SMTP-SSL \
+# perl-LWP-Protocol-https \
+# perl-PerlIO-gzip \
+# perl-Proc-ProcessTable \
+# perl-Regexp-Common \
+# perl-Safe \
+# perl-SNMP_Session \
+# perl-String-ShellQuote \
+# perl-Sys-Hostname \
+# perl-TermReadKey \
+# perl-threads-shared \
+# perl-Test2-Suite \
+# perl-Time-Piece \
+# perl-URI
+#
+# The following libraries are not available in the CentOS repos
+#
+# cpanm \
+#   IO::Interactive \
+#   IPC::Shareable \
+#   Mail::IMAPClient \
+#   Mail::POP3Client \
+#   Mail::SPF \
+#   RRDTool::OO \
+#   TOML::Tiny
+#
+# The following Perl libraries were distributed in MailCleaner's 'install/src/perl' directory or
 # were included in the list of debian packages but don't appear to be used within the current source
-# code. We need to verify which of these dependencies still exist and (eg. via MailScanner) and
-# download them via CPAN if we still need them.
+# code. We need to verify which of these dependencies still exist and (eg. via MailScanner, or as
+# dependencies of dependencies) and download them if we still need them.
 #
 # AI::Categorizer
 # AI::DecisionTree
@@ -218,30 +290,6 @@ rm $VERSION
 # XML::Parser
 # */
 
-# /* Possibly replaced by perl-Razor-Agent, but would likely need an updated module.
-# razor
-# */
-
-# /*
-# Build our own Perl. The one in the repositories has over 100MB of dependencies.
-#
-# TODO: Use App::StaticPerl to build a minimal Perl and bundle in all dependencies
-#
-# */
-
-cd /tmp
-git clone --depth=1 https://github.com/Perl/perl5
-cd perl5
-git fetch --tags
-PERLVERSION=$(dnf list perl | tail -n 1 | sed 's/[^:]*:\([^\-]*\)\-.*/\1/')
-git checkout v$PERLVERSION
-./configure.gnu
-make
-make test
-make install
-cd ..
-rm -rf perl5
-
 # /*
 # Try getting all PHP dependencies through composer
 # php-bcmath \
@@ -263,10 +311,7 @@ rm -rf perl5
 # php-imap
 # php-mcrypt
 # php-xmlrpc (provided by Zend)
-# */
-
-# /*
-# Install missing Perl dependencies from CPAN
+#
 # GreylistD doesn't have an official package. Investigate built-in greylisting configuration provided by exim-greaylist:
 # https://github.com/Exim/exim/wiki/SimpleGreylisting
 # Otherwise, greylistd is just a python program, so we can fetch from GitHub and write a simple installer.
@@ -293,11 +338,6 @@ rm -rf perl5
 # /* Missing, perhaps resolved my net-snmp
 # snmp-mibs-downloader
 # */
-cpanm Mail::IMAPClient
-cpanm Mail::POP3Client
-cpanm RRDTool::OO
-cpanm IPC::Shareable
-cpanm IO::Interactive
 
 # /*
 # Remove packages which are not useful in mail filtering context
