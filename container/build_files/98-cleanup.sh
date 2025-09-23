@@ -45,11 +45,3 @@ dnf clean all
 rm -rf /var/cache/dnf
 rm -rf ~/.cpan/build
 rm -rf /run/build_files
-
-setterm --foreground blue
-echo "# Creating clean /tmp and /var..."
-setterm --foreground default
-rm -rf /tmp
-rm -rf /var
-mkdir -m 1777 /tmp
-mkdir -m 1777 -p /var/tmp
