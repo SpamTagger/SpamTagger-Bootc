@@ -260,7 +260,7 @@ build-container $variant="" $version="":
 
 alias test := test-container
 
-# Run Container Image
+# Run Tests in Container Image
 [group('Container')]
 test-container $variant="" $version="" $registry="":
     #!/usr/bin/env bash

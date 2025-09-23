@@ -1,10 +1,17 @@
+/* Dynamically insert centos version */
 FROM SOURCE_IMAGE as spamtagger-bootc
 
+/* Dynamically generate IMAGE_VERSIAN argument */
 ARG IMAGE_VERSION_ARG
+/* Allow for colored output */
+ARG TERM=xterm 
+
+/* Define CI argument if running in CI environment */
 #ifdef CI_SETX
 ARG CI=1
 #endif /* CI_SETX */
 
+/* Prepare filesystem for OSTree */
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/log \
     --mount=type=tmpfs,dst=/var/tmp \
@@ -14,6 +21,7 @@ RUN --mount=type=cache,dst=/var/cache \
 ostree container commit
 RUNEOF
 
+/* Install Packages */
 COPY build_files/github-release-install.sh /run/build_files/
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/log \
@@ -28,12 +36,15 @@ RUN --mount=type=cache,dst=/var/cache \
 ostree container commit
 RUNEOF
 
+/* Configure OS and Application */
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/log \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
+/* Configure system and services */
 #include "build_files/13-base-configurations.sh"
+/* Configure version-specific application */
 #ifdef PLUS
 #include "build_files/spamtagger-plus/13-configuration.sh"
 #else
@@ -42,17 +53,21 @@ RUN --mount=type=cache,dst=/var/cache \
 ostree container commit
 RUNEOF
 
+/* Clean up installation */
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/log \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
+/* Remove unnecessary files/repositories/etc. */
 #include "build_files/98-cleanup.sh"
 ostree container commit
 RUNEOF
 
+/* Finalize OSTree */
 RUN bash <<'RUNEOF'
 #include "build_files/99-finalize.sh"
 RUNEOF
 
+/* Create Bootc image from OSTree */
 RUN ["bootc", "container", "lint", "--fatal-warnings", "--no-truncate"]
