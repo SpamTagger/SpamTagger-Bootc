@@ -316,26 +316,18 @@ rm $VERSION
 # https://github.com/Exim/exim/wiki/SimpleGreylisting
 # Otherwise, greylistd is just a python program, so we can fetch from GitHub and write a simple installer.
 # git clone https://github.com/SpamTagger/greylistd
-# */
-
-# /*
+#
 # missing Apache modules
 # libapache2-mpm-itk (or something like (mod_mpm-itx) doesn't exist. Other MPM modules probably exist, but I don't think we actually need to run multilple vhosts, so this is not needed.
-# */
-
-# /*
+#
 # Dependencies for custom Exim package. Test what features are missing from CentOS package before compiling our own.
 # libssl3 (now openssl-devel?) \
 # libpcre3
-# */
-
-# /* Pending acceptance for EPEL 10 https://bodhi.fedoraproject.org/updates/?packages=pwgen
-# Maybe just generate our own random password (used in install/installer.pl).
 #
-# pwgen
-# */
-
-# /* Missing, perhaps resolved my net-snmp
+# `pwgen` is pending acceptance for EPEL 10 https://bodhi.fedoraproject.org/updates/?packages=pwgen
+# TODO: Probably just generate our own random password (used in install/installer.pl).
+#
+# Missing (perhaps resolved my net-snmp?)
 # snmp-mibs-downloader
 # */
 
