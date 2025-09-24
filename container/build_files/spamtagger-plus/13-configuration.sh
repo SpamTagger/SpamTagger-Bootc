@@ -11,19 +11,6 @@ echo "################################"
 setterm --foreground default
 
 setterm --foreground blue
-echo "# Cloning SpamTagger and Zend..."
-setterm --foreground default
-git clone --recurse-submodules --depth=1 https://github.com/SpamTagger/SpamTagger-Plus /usr/spamtagger
-
-setterm --foreground blue
-echo "# Cleaning up repo files..."
-setterm --foreground default
-rm -rf /usr/spamtagger/.git*
-mv /usr/spamtagger/www/vendor/Zend /usr/spamtagger/www/vendor/Zend.git
-mv /usr/spamtagger/www/vendor/Zend.git/library/Zend /usr/spamtagger/www/vendor/Zend
-rm -rf /usr/spamtagger/www/vendor/Zend.git
-
-setterm --foreground blue
 echo "# Updating os-release..."
 setterm --foreground default
 sed -i 's|^BUG_REPORT_URL=.*|BUG_REPORT_URL="https://github.com/SpamTagger/SpamTagger-Plus/issues"|' /usr/lib/os-release
@@ -32,30 +19,20 @@ echo 'VARIANT="SpamTagger-Plus"' >>/usr/lib/os-release
 setterm --foreground blue
 echo "# Updating /etc/issue..."
 setterm --foreground default
-
-cd /usr/spamtagger
 PRETTY_NAME="$(grep PRETTY_NAME /etc/os-release | cut -d '"' -f 2)"
 cat etc/issue | sed "s/__PRETTY_NAME__/$PRETTY_NAME/" >/etc/issue
 
-# /*
-# Set default root password 'STPassw0rd'
-# */
+setterm --foreground blue
+echo "# Setting default password..."
+setterm --foreground default
 sed -i 's/root:[^:]*:/root:$y$j9T$kfLbiAeBa5PuQAZtTqBph1$ufRc85kbALH5Eg.IhtZcoyoDZ92SZfJmdX9p22Qg1D5:/' /etc/shadow
 
-# /*
-# Temporarily create dummy configuration file to pass compile tests
-# */
-
+setterm --foreground blue
+echo "# Creating blank configuration file..."
+setterm --foreground default
 touch /etc/spamtagger.conf
 
-# /*
-# Clean up unnecessary files
-#
-# * Git history is available elsewhere, we don't need to ship it with production releases
-# * Zend comes bundled with a lot of extras, but we only need the actual libraries
-#
-# */
-
+/* TODO: move Anaconda configuration files to this repo instead of the source repo. Get it to actually work... */
 setterm --foreground blue
 echo "# Applying Anaconda installer configuration..."
 setterm --foreground default

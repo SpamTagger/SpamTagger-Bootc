@@ -11,9 +11,7 @@ echo "################"
 setterm --foreground default
 
 # /*
-### OS Release
-# set variant and url for unique identification
-# NOTE: if VARIANT/DEFAULT_HOSTNAME is added to CentOS the echos must become seds
+# NOTE: if VARIANT_ID and DEFAULT_HOSTNAME are added to the upstream file, the `echo`s must become `sed`s
 # */
 setterm --foreground blue
 echo "# Configuring os-release..."

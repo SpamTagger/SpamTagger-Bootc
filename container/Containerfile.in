@@ -1,14 +1,36 @@
-/* Dynamically insert centos version */
-FROM SOURCE_IMAGE as spamtagger-bootc
+/* Build Perl, install SpamTagger version and bundle with staticperl in seperate stage */
+FROM registry.fedoraproject.org/fedora:latest as perl-builder
 
-/* Dynamically generate IMAGE_VERSIAN argument */
-ARG IMAGE_VERSION_ARG
 /* Allow for colored output */
 ARG TERM=xterm 
-
 /* Define CI argument if running in CI environment */
 #ifdef CI_SETX
 ARG CI=1
+#endif /* CI_SETX */
+
+/* Add detect-modules.pl for staticperl bundling */
+COPY build_files/detect-modules.pl /run/build-files/
+
+/* Generate version-specific module list for CPAN */
+RUN bash <<'RUNEOF'
+/* Install latest stable Perl */
+#include "build_files/10-perl.sh"
+/* Install SpamTagger source at /usr/spamtagger */
+#ifdef PLUS
+#include "build_files/spamtagger-plus/10-application.sh"
+#else
+#include "build_files/spamtagger/10-application.sh"
+#endif /* PLUS */
+RUNEOF
+
+/* Dynamically insert CentOS version for final container */
+FROM SOURCE_IMAGE as spamtagger-bootc
+
+/* Redeclare vars */
+ARG IMAGE_VERSION_ARG
+ARG TERM=xterm
+#ifdef CI_SETX
+ARG CI
 #endif /* CI_SETX */
 
 /* Prepare filesystem for OSTree */
@@ -21,21 +43,20 @@ RUN --mount=type=cache,dst=/var/cache \
 ostree container commit
 RUNEOF
 
+/* Add staticperl and application from build container */
+COPY --from=perl-builder /opt/staticperl /opt/staticperl
+/* Add SpamTagger from build container */
+COPY --from=perl-builder /usr/spamtagger /usr/spamtagger
+
+/* Only needed for add-ons
+*/
+
 /* Install Packages */
-COPY build_files/github-release-install.sh /run/build_files/
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=tmpfs,dst=/var/log \
     --mount=type=tmpfs,dst=/var/tmp \
     --mount=type=tmpfs,dst=/tmp \
     bash <<'RUNEOF'
-/* Generate version-specific module list for CPAN */
-#ifdef PLUS
-#include "build_files/spamtagger-plus/10-cpan.sh"
-#else
-#include "build_files/spamtagger/10-cpan.sh"
-#endif /* PLUS */
-/* Install staticperl with CPAN module bundles */
-#include "build_files/10-perl.sh"
 /* Install version-specific packages */
 #ifdef PLUS
 #include "build_files/spamtagger-plus/10-packages.sh"
@@ -83,6 +104,10 @@ RUNEOF
 RUN bash <<'RUNEOF'
 #include "build_files/99-finalize.sh"
 RUNEOF
+
+/* Set default environment variables */
+ENV PATH=/usr/spamtagger/bin:$PATH
+ENV PERL5LIB=/opt/staticperl/lib/perl5:/usr/spamtagger/lib
 
 /* Create Bootc image from OSTree */
 RUN ["bootc", "container", "lint", "--fatal-warnings", "--no-truncate"]
