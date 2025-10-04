@@ -222,6 +222,7 @@ build-container $variant="" $version="":
     )
 
     # BuildArgs
+    PERL_VERSION="$(curl -fsSL 'https://www.perl.org/get.html#unix_like' | grep -Eo 'perl-5+\.[0-9][02468]\.[0-9]+' | sort -V | tail -n 1)"
     BUILD_ARGS=(
         "--security-opt=label=disable"
         "--cap-add=all"
@@ -229,6 +230,7 @@ build-container $variant="" $version="":
         # Divergence from Cayo: KERNEL_NAME not specified, since no variants are needed for CentOS
         "--cpp-flag=-DIMAGE_VERSION_ARG=IMAGE_VERSION=$IMAGE_VERSION"
         "--cpp-flag=-DSOURCE_IMAGE=$source_image"
+        "--cpp-flag=-DPERL_VERSION_ARG=$PERL_VERSION"
         # Divergence from Cayo: Removed additional flag: --cpp-flag=-DZFS=$AKMODS_ZFS_IMAGE
     )
     for FLAG in $image_cpp_flags; do
@@ -252,7 +254,6 @@ build-container $variant="" $version="":
     done
     echo "$labels" >> {{ builddir / '$variant-$version/Containerfile' }}
     sed -i '/^$/d;/^#.*$/d' {{ builddir / '$variant-$version/Containerfile' }}
-
     # Build Image
     {{ podman }} build -f container/Containerfile.in "${BUILD_ARGS[@]}" "${LABELS[@]}" "${TAGS[@]}" {{ justfile_dir() }}/container
 

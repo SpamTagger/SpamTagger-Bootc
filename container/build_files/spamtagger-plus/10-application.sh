@@ -70,19 +70,32 @@ mkdir -p /opt/staticperl/lib/perl5
 setterm --foreground blue
 echo "# Generating required module list..."
 setterm --foreground default
-perl /run/build-files/detect-modules.pl /usr/spamtagger >/tmp/.staticperlrc
+perl /run/build-files/detect-modules.pl /usr/spamtagger >/etc/staticperlrc
 
 setterm --foreground blue
 echo "# Creating .staticperlrc..."
 setterm --foreground default
-echo "--prefix /opt/staticperl" >>/tmp/staticperlrc
+# /*
+# VERSION=${PERL_VERSION:5:11}
+# echo "--with-perl /opt/${PERL_VERSION}/bin/perl" >>/tmp/staticperlrc
+# echo "--prefix /opt/staticperl" >>/tmp/staticperlrc
+# echo "--libdir /usr/spamtagger/lib" >>/tmp/staticperlrc
+# echo "--strip PPI" >>/tmp/staticperlrc
+# echo "--no-core-modules" >>/tmp/staticperlrc
+# echo "--clean" >>/tmp/staticperlrc
+# echo "--verbose" >>/tmp/staticperlrc
+# echo "--force" >>/tmp/staticperlrc
 echo "--libdir /usr/spamtagger/lib" >>/tmp/staticperlrc
-echo "--strip PPI" >>/tmp/staticperlrc
 echo "--no-core-modules" >>/tmp/staticperlrc
 echo "--clean" >>/tmp/staticperlrc
 echo "--verbose" >>/tmp/staticperlrc
 echo "--force" >>/tmp/staticperlrc
+echo "PERL_VERSION=/opt/${PERL_VERSION}/bin/perl" >>/tmp/staticperlrc
+# */
 
+echo "PERL_PREFIX=/opt/staticperl" >>/tmp/staticperlrc
+echo "PERL_VERSION=https://mirror.netcologne.de/cpan/src/5.0/${PERL_VERSION}.tar.xz" >>/tmp/staticperlrc
+echo "PERL_CCFLAGS=-DPERL_STATIC_INLINE" >>/tmp/staticperl
 # /*
 # setterm --foreground blue
 # echo "Patching Staticperl for root user in container..."
@@ -93,8 +106,8 @@ echo "--force" >>/tmp/staticperlrc
 setterm --foreground blue
 echo "# Building our Perl..."
 setterm --foreground default
-mv /tmp/staticperlrc ./.staticperlrc
-staticperl
+mv /tmp/staticperlrc /etc/staticperlrc
+staticperl mkperl --strip ppi --verbose
 
 find /opt/staticperl
 sleep 200
@@ -106,3 +119,5 @@ find /opt/staticperl -name '*.packlist' -delete
 find /opt/staticperl -name '*.pod' -delete
 find /opt/staticperl -name '*.so' -delete
 find /opt/staticperl -type d -name '.git' -prune -exec rm -rf {} +
+rm -rf /opt/staticperl/lib/perl5/*/pod
+rm -rf /opt/staticperl/lib/perl5/*/auto

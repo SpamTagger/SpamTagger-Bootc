@@ -3,10 +3,18 @@ FROM registry.fedoraproject.org/fedora:latest as perl-builder
 
 /* Allow for colored output */
 ARG TERM=xterm 
+/* Dynamically detected latest Perl version */
+ARG PERL_VERSION=PERL_VERSION_ARG
+
 /* Define CI argument if running in CI environment */
 #ifdef CI_SETX
 ARG CI=1
 #endif /* CI_SETX */
+
+/* Install dependencies for Perl build */
+RUN bash <<'RUNEOF'
+#include "build_files/perl/01-dependencies.sh"
+RUNEOF
 
 /* Add detect-modules.pl for staticperl bundling */
 COPY build_files/detect-modules.pl /run/build-files/
@@ -14,8 +22,13 @@ COPY build_files/detect-modules.pl /run/build-files/
 /* Generate version-specific module list for CPAN */
 RUN bash <<'RUNEOF'
 /* Install latest stable Perl */
-#include "build_files/10-perl.sh"
+#include "build_files/perl/10-perl.sh"
+RUNEOF
+
+ENV PATH=/opt/${PERL_VERSION}/bin:$PATH
+
 /* Install SpamTagger source at /usr/spamtagger */
+RUN bash <<'RUNEOF'
 #ifdef PLUS
 #include "build_files/spamtagger-plus/10-application.sh"
 #else

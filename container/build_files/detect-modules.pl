@@ -54,4 +54,4 @@ sub check_dir ($path) {
 check_dir($start);
 
 delete($modules{$_}) foreach keys(%provided);
-print join("\n  ", ("--modules", sort(keys(%modules))))."\n";
+print "EXTRA_MODULES=".join("  ", (sort(keys(%modules))))."\n";
