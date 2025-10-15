@@ -1,0 +1,25 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "####################################"
+echo "# Building Bootc..."
+echo "####################################"
+setterm --foreground default
+
+rm /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages
+apt update -y
+apt install -y $(cat /run/build_files/bootc-deps | tr '\n' ' ')
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile minimal -y
+git clone https://github.com/bootc-dev/bootc.git /bootc
+cd /bootc
+CARGO_FEATURES="composefs-backend" PATH="/root/.cargo/bin:$PATH" make bin
+make install-all
+make install-initramfs-dracut
+git clone https://github.com/p5/coreos-bootupd.git -b sdboot-support /bootupd
+cd /bootupd
+/root/.cargo/bin/cargo build --release --bins --features systemd-boot

@@ -1,87 +1,117 @@
-/* Dynamically insert centos version */
-FROM SOURCE_IMAGE as spamtagger-bootc
+FROM SOURCE_IMAGE as bootc-builder
 
-/* Dynamically generate IMAGE_VERSIAN argument */
-ARG IMAGE_VERSION_ARG
 /* Allow for colored output */
 ARG TERM=xterm 
+/* Run APT without input */
+ARG DEBIAN_FRONTEND=noninteractive
 
 /* Define CI argument if running in CI environment */
 #ifdef CI_SETX
 ARG CI=1
 #endif /* CI_SETX */
 
-/* Prepare filesystem for OSTree */
+COPY build_files/bootc-deps /run/build_files/bootc-deps
+/* Build Bootc tools */
 RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/var/log \
-    --mount=type=tmpfs,dst=/var/tmp \
-    --mount=type=tmpfs,dst=/tmp \
-    bash <<'RUNEOF'
-#include "build_files/01-common.sh"
-ostree container commit
+  --mount=type=tmpfs,dst=/var/log \
+  --mount=type=tmpfs,dst=/var/tmp \
+  --mount=type=tmpfs,dst=/tmp \
+  bash <<'RUNEOF'
+#include "build_files/build-bootc"
 RUNEOF
 
-/* Install Packages */
-COPY build_files/github-release-install.sh /run/build_files/
+/* Dynamically insert centos version */
+FROM SOURCE_IMAGE as spamtagger-bootc
+
+/* Dynamically generate arguments */
+ARG IMAGE_VERSION=IMAGE_VERSION_SUB
+ARG VERSION=VERSION_SUB
+ARG VARIANT=VARIANT_SUB
+
+/* Allow for colored output */
+ARG TERM=xterm 
+/* Run APT without input */
+ARG DEBIAN_FRONTEND=noninteractive
+
+/* Define CI argument if running in CI environment */
+#ifdef CI_SETX
+ARG CI=1
+#endif /* CI_SETX */
+
+COPY build_files/build-deps /run/build_files/build-deps
+COPY build_files/VARIANT_SUB/build-deps /run/build_files/VARIANT_SUB/build-deps
+COPY build_files/VARIANT_SUB/VERSION_SUB/build-deps /run/build_files/VARIANT_SUB/VERSION_SUB/build-deps
+/* Prepare filesystem for OSTree */
 RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/var/log \
-    --mount=type=tmpfs,dst=/var/tmp \
-    --mount=type=tmpfs,dst=/tmp \
-    bash <<'RUNEOF'
-/* Generate version-specific module list for CPAN */
+  --mount=type=tmpfs,dst=/var/log \
+  --mount=type=tmpfs,dst=/var/tmp \
+  --mount=type=tmpfs,dst=/tmp \
+  --mount=type=bind,from=bootc-builder,source=/,dst=/run/bootc-builder \
+  bash <<'RUNEOF'
+#include "build_files/prepare-filesystem"
+RUNEOF
+
+/* Install Packages
+RUN --mount=type=cache,dst=/var/cache \
+  --mount=type=tmpfs,dst=/var/log \
+  --mount=type=tmpfs,dst=/var/tmp \
+  --mount=type=tmpfs,dst=/tmp \
+  bash <<'RUNEOF'
+/* Generate version-specific module list for CPAN
 #ifdef PLUS
 #include "build_files/spamtagger-plus/10-cpan.sh"
 #else
 #include "build_files/spamtagger/10-cpan.sh"
 #endif /* PLUS */
-/* Install staticperl with CPAN module bundles */
+/* Install staticperl with CPAN module bundles
 #include "build_files/10-perl.sh"
-/* Install version-specific packages */
+/* Install version-specific packages
 #ifdef PLUS
 #include "build_files/spamtagger-plus/10-packages.sh"
 #else
 #include "build_files/spamtagger/10-packages.sh"
 #endif /* PLUS */
-ostree container commit
+/* ostree container commit
 RUNEOF
 
-/* Configure OS and Application */
+/* Configure OS and Application
 RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/var/log \
-    --mount=type=tmpfs,dst=/var/tmp \
-    --mount=type=tmpfs,dst=/tmp \
-    bash <<'RUNEOF'
-/* Configure system and services */
+  --mount=type=tmpfs,dst=/var/log \
+  --mount=type=tmpfs,dst=/var/tmp \
+  --mount=type=tmpfs,dst=/tmp \
+  bash <<'RUNEOF'
+/* Configure system and services
 #include "build_files/13-base-configurations.sh"
-/* Configure version-specific application */
+/* Configure version-specific application
 #ifdef PLUS
 #include "build_files/spamtagger-plus/13-configuration.sh"
 #else
 #include "build_files/spamtagger/13-configuration.sh"
-#endif /* PLUS */
-ostree container commit
+#endif /* PLUS
+/* ostree container commit
 RUNEOF
 
 /* Clean up installation */
 RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=tmpfs,dst=/var/log \
-    --mount=type=tmpfs,dst=/var/tmp \
-    --mount=type=tmpfs,dst=/tmp \
-    bash <<'RUNEOF'
+  --mount=type=tmpfs,dst=/var/log \
+  --mount=type=tmpfs,dst=/var/tmp \
+  --mount=type=tmpfs,dst=/tmp \
+  bash <<'RUNEOF'
 /* Remove unnecessary files/repositories/etc. */
 #include "build_files/98-cleanup.sh"
-/* Remove packages and files not needed for specific version */
+/* Remove packages and files not needed for specific version
 #ifdef PLUS
 #include "build_files/spamtagger-plus/98-cleanup.sh"
 #else
 #include "build_files/spamtagger/98-cleanup.sh"
 #endif /* PLUS */
-ostree container commit
 RUNEOF
 
+ENV OSTREE_SELINUX_ENABLE=0
 /* Finalize OSTree */
 RUN bash <<'RUNEOF'
 #include "build_files/99-finalize.sh"
+/* ostree commit */
 RUNEOF
 
 /* Create Bootc image from OSTree */

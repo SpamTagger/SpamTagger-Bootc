@@ -1,0 +1,13 @@
+build-essential
+curl
+dracut
+git
+go-md2man
+libfuse3-dev
+libostree-dev
+libssl-dev
+libzstd-dev
+meson
+ostree
+pkg-config
+whois

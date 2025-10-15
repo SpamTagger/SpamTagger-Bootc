@@ -10,20 +10,17 @@ echo "# Installing SpamTagger-Plus packages..."
 echo "########################################"
 setterm --foreground default
 
-setterm --foreground blue
-echo "# Enabling UBlue OS repository..."
-setterm --foreground default
-dnf -y copr enable ublue-os/packages
-
 # /*
 # TODO: `razor` is not provided as a CentOS package (but was a Debian package). Investigate if this can be satisfied by `perl-Razor-Agent` or if just `Mail::SpamAssassin::Plugin::Razor2` is enough.
 # */
 setterm --foreground blue
 echo "# Installing all system and build packages..."
 setterm --foreground default
-dnf -y install --setopt=install_weak_deps=False --allowerasing \
-  bind \
-  bogofilter \
+apt-get install -y \
+  bind
+
+# /*
+bogofilter \
   bzip2 \
   clamav \
   clamav-unofficial-sigs \
@@ -84,6 +81,7 @@ dnf -y install --setopt=install_weak_deps=False --allowerasing \
   vim \
   wget \
   wireguard-tools
+# */
 
 setterm --foreground blue
 echo "# Applying custom signing policy..."
@@ -94,18 +92,12 @@ rm -fr /usr/etc
 sed -i 's/ublue-os/spamtagger/' /etc/containers/policy.json
 
 setterm --foreground blue
-echo "# Disabling UBlue OS repository..."
-setterm --foreground default
-dnf remove -y ublue-os-signing
-dnf -y copr disable ublue-os/packages
-
-setterm --foreground blue
 echo "# Installing DCC from OBS..."
 setterm --foreground default
-OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/AlmaLinux_10/x86_64/"
+OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/Debian_13/x86_64/"
 VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc-[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
 wget $OBS_PATH$VERSION
-rpm -i $VERSION
+dpkg -i $VERSION
 rm $VERSION
 
 # /* The following Perl libraries were distributed in MailCleaner's 'install/src/perl' directory or
@@ -233,7 +225,7 @@ cd /tmp
 git clone --depth=1 https://github.com/Perl/perl5
 cd perl5
 git fetch --tags
-PERLVERSION=$(dnf list perl | tail -n 1 | sed 's/[^:]*:\([^\-]*\)\-.*/\1/')
+PERLVERSION=$(apt-cache show perl | grep Version: | sed -r 's/Version: (5\.[0-9][24680].[0-9]*).*/\1/')
 git checkout v$PERLVERSION
 ./configure.gnu
 make

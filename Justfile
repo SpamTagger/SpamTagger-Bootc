@@ -197,7 +197,6 @@ build-container $variant="" $version="":
     for tag in "${tags[@]}"; do
         TAGS+=("--tag" "localhost/$image_name:$tag")
     done
-
     # Divergence from Cayo: Custom kernel (ZFS) dropped. In Cayo an additional AKMODS image layer is pulled here.
 
     # Labels
@@ -227,7 +226,9 @@ build-container $variant="" $version="":
         "--cap-add=all"
         "--device" "/dev/fuse"
         # Divergence from Cayo: KERNEL_NAME not specified, since no variants are needed for CentOS
-        "--cpp-flag=-DIMAGE_VERSION_ARG=IMAGE_VERSION=$IMAGE_VERSION"
+        "--cpp-flag=-DIMAGE_VERSION_SUB=$IMAGE_VERSION"
+        "--cpp-flag=-DVERSION_SUB=$version"
+        "--cpp-flag=-DVARIANT_SUB=$variant"
         "--cpp-flag=-DSOURCE_IMAGE=$source_image"
         # Divergence from Cayo: Removed additional flag: --cpp-flag=-DZFS=$AKMODS_ZFS_IMAGE
     )
