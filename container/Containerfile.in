@@ -20,7 +20,42 @@ RUN --mount=type=cache,dst=/var/cache \
 #include "build_files/build-bootc"
 RUNEOF
 
-/* Dynamically insert centos version */
+/* 
+BUILD EXIM
+
+Second stage image used to build custom Exim package with our extra features not
+otherwise available in Debian's version.
+*/
+
+/* Dynamically insert base image from 'source' in images.yml*/
+FROM SOURCE_IMAGE as exim-builder
+
+/* Allow for colored output */
+ARG TERM=xterm 
+/* Run APT without input */
+ARG DEBIAN_FRONTEND=noninteractive
+/* Define CI argument if running in CI environment */
+#ifdef CI_SETX
+ARG CI=1
+#endif /* CI_SETX */
+
+/* EXIM_VERSION to build; loaded from images.yml */
+ARG EXIM_VERSION=EXIM_VERSION_SUB
+
+/* Copy in file which contains the dependency list */
+COPY build_files/exim-deps /run/build_files/exim-deps
+/* Copy in directory which contains the Debian packaging metadata*/
+COPY build_files/exim-files /run/build_files/exim-files
+
+/* Run Bash recipe for Exim build */
+RUN --mount=type=cache,dst=/var/cache \
+  --mount=type=tmpfs,dst=/var/log \
+  --mount=type=tmpfs,dst=/var/tmp \
+  --mount=type=tmpfs,dst=/tmp \
+  bash <<'RUNEOF'
+#include "build_files/build-exim"
+RUNEOF
+
 FROM SOURCE_IMAGE as spamtagger-bootc
 
 /* Dynamically generate arguments */
