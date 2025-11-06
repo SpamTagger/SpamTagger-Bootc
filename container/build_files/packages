@@ -221,26 +221,6 @@ rm $VERSION
 # */
 
 # /*
-# Build our own Perl. The one in the repositories has over 100MB of dependencies.
-#
-# TODO: Use App::StaticPerl to build a minimal Perl and bundle in all dependencies
-#
-# */
-
-cd /tmp
-git clone --depth=1 https://github.com/Perl/perl5
-cd perl5
-git fetch --tags
-PERLVERSION=$(apt-cache show perl | grep Version: | sed -r 's/Version: (5\.[0-9][24680].[0-9]*).*/\1/')
-git checkout v$PERLVERSION
-./configure.gnu
-make
-make test
-make install
-cd ..
-rm -rf perl5
-
-# /*
 # Try getting all PHP dependencies through composer
 # php-bcmath 
 # php-common 
