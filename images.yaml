@@ -14,31 +14,33 @@ spamtagger-plus-base: &spamtagger-plus-base
   cppFlags: ["PLUS"]
   product: spamtagger-plus
   upstream: debian
-spamtagger-14: &spamtagger-14
+spamtagger-13: &spamtagger-13
   <<: *spamtagger-base
   # TODO: Implement a Renovate Regex
-  source: debian:forky-slim
-  version: 14
+  source: debian:stable-slim
+  version: 13
+  exim: 4.99
   default: false
-spamtagger-plus-14: &spamtagger-plus-14
+spamtagger-plus-13: &spamtagger-plus-13
   <<: *spamtagger-plus-base
   # TODO: Implement a Renovate Regex
-  source: debian:forky-slim
-  version: 14
+  source: debian:stable-slim
+  version: 13
+  exim: 4.99
   default: true
 
 defaults:
   variant: spamtagger-plus
-  version: 14
+  version: 13
 
 images:
-  spamtagger-bootc-spamtagger-14:
+  spamtagger-bootc-spamtagger-13:
     !!merge <<:
-      - *spamtagger-14
+      - *spamtagger-13
       - *spamtagger-bootc-base
-  spamtagger-bootc-spamtagger-plus-14:
+  spamtagger-bootc-spamtagger-plus-13:
     !!merge <<:
-      - *spamtagger-plus-14
+      - *spamtagger-plus-13
       - *spamtagger-bootc-base
   rechunker:
     # TODO: Add Renovate Regex configuration
