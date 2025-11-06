@@ -13,12 +13,12 @@ linux-image-generic
 make
 openssh-client
 openssh-server
-ostree
-ostree-boot
+rsync
 selinux-policy-default
 skopeo
 systemd
-systemd-boot*
+systemd-boot
+systemd-boot-*
 systemd-resolved
 xfsprogs
 zstd

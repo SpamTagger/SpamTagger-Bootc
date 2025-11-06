@@ -1,0 +1,43 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "#######################"
+echo "# Configuring System..."
+echo "#######################"
+setterm --foreground default
+
+sed -i 's|^HOME=.*|HOME=/var/home|' /etc/default/useradd
+
+setterm --foreground blue
+echo "# Setting up systemd-resolved..."
+setterm --foreground default
+
+cat >/usr/lib/systemd/system-preset/91-systemd-resolved.preset <<'EOF'
+enable systemd-resolved.service
+EOF
+
+cat >/usr/lib/tmpfiles.d/systemd-resolved.conf <<'EOF'
+L /etc/resolv.conf - - - - ../run/systemd/resolve/stub-resolv.conf
+EOF
+
+systemctl preset systemd-resolved.service
+
+cat >/usr/lib/sysusers.d/ssh.conf <<'EOF'
+g _ssh -
+EOF
+
+cat >/usr/lib/sysusers.d/ssl-cert.conf <<'EOF'
+g ssl-cert -
+EOF
+
+setterm --foreground blue
+echo "# Applying custom signing policy..."
+setterm --foreground default
+mv /etc/containers/policy.json /etc/containers/policy.json-upstream
+mv /usr/etc/containers/policy.json /etc/containers/
+rm -fr /usr/etc
+sed -i 's/ublue-os/spamtagger/' /etc/containers/policy.json

@@ -5,21 +5,48 @@
 set ${CI:+-x} -euo pipefail
 
 setterm --foreground green
-echo "####################################"
+echo "###################"
 echo "# Building Bootc..."
-echo "####################################"
+echo "###################"
 setterm --foreground default
 
 rm /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages
+
+setterm --foreground blue 
+echo "# Installing distribution dependencies..."
+setterm --foreground default
+
 apt update -y
 apt install -y $(cat /run/build_files/bootc-deps | tr '\n' ' ')
 
+setterm --foreground blue 
+echo "# Installing Rust..."
+setterm --foreground default
+
+export CARGO_HOME=/rust
+export RUSTUP_HOME=/rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile minimal -y
+. $CARGO_HOME/env
+
+setterm --foreground blue 
+echo "# Building OSTree.."
+setterm --foreground default
+
+git clone https://github.com/ostreedev/ostree.git --depth 1 /ostree
+cd /ostree
+git submodule update --init
+NOCONFIGURE=1 ./autogen.sh
+./configure --prefix=/build/usr --libdir=/build/usr/lib --sysconfdir=/build/etc
+make
+make install
+ldconfig
+ln -svf /build/usr/lib/libostree* /lib/$(arch)-linux-gnu/
+
+setterm --foreground blue 
+echo "# Building Bootc..."
+setterm --foreground default
+
+export PKG_CONFIG_PATH=/build/usr/lib/pkgconfig:/usr/share/pkgconfig
 git clone https://github.com/bootc-dev/bootc.git /bootc
 cd /bootc
-CARGO_FEATURES="composefs-backend" PATH="/root/.cargo/bin:$PATH" make bin
-make install-all
-make install-initramfs-dracut
-git clone https://github.com/p5/coreos-bootupd.git -b sdboot-support /bootupd
-cd /bootupd
-/root/.cargo/bin/cargo build --release --bins --features systemd-boot
+prefix=/build/usr make bin install-all install-initramfs-dracut
