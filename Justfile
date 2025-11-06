@@ -198,16 +198,13 @@ build-container $variant="" $version="":
     for tag in "${tags[@]}"; do
         TAGS+=("--tag" "localhost/$image_name:$tag")
     done
-    # Divergence from Cayo: Custom kernel (ZFS) dropped. In Cayo an additional AKMODS image layer is pulled here.
 
     # Labels
     IMAGE_VERSION="$image_version.$TIMESTAMP"
-    # Divergence from Cayo: KERNEL_VERSION would be inspected from AKMODS image instead
-    # Divergence from Cayo: Updated labels
     LABELS=(
         "--label" "containers.bootc=1"
         "--label" "io.artifacthub.package.deprecated=false"
-        "--label" "io.artifacthub.package.keywords=bootc,spamtagger-bootc,centos,cayo,ublue,universal-blue"
+        "--label" "io.artifacthub.package.keywords=bootc,spamtagger-bootc,debian"
         "--label" "io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/205223896&v=4"
         "--label" "io.artifacthub.package.maintainers=[{\"name\": \"John Mertz\", \"email\": \"git@john.me.tz\"}]"
         "--label" "io.artifacthub.package.readme-url=https://raw.githubusercontent.com/$image_registry/$image_org/$image_repo/main/README.md"
@@ -221,18 +218,26 @@ build-container $variant="" $version="":
         "--label" "org.opencontainers.image.version=${IMAGE_VERSION}"
     )
 
+    # Hypothetically provide support for other architectures supported by Debian*/
+    # NOTE: Currently DCC only supports amd64 and arm64
+    ARCH=$(arch)
+    [[ "$ARCH" == "aarch64" ]] && ARCH=arm64
+    [[ "$ARCH" == "armv7l" ]] && ARCH=armhf
+    [[ "$ARCH" == "x86_64" ]] && ARCH=amd64
+    [[ "$ARCH" == "ppc64le" ]] && ARCH=ppc64el
+    # riscv64 and s390x map directly
+
     # BuildArgs
     BUILD_ARGS=(
         "--security-opt=label=disable"
         "--cap-add=all"
         "--device" "/dev/fuse"
-        # Divergence from Cayo: KERNEL_NAME not specified, since no variants are needed for CentOS
         "--cpp-flag=-DIMAGE_VERSION_SUB=$IMAGE_VERSION"
         "--cpp-flag=-DEXIM_VERSION_SUB=$exim_version"
         "--cpp-flag=-DVERSION_SUB=$version"
         "--cpp-flag=-DVARIANT_SUB=$variant"
         "--cpp-flag=-DSOURCE_IMAGE=$source_image"
-        # Divergence from Cayo: Removed additional flag: --cpp-flag=-DZFS=$AKMODS_ZFS_IMAGE
+        "--cpp-flag=-DARCH_SUB=$ARCH"
     )
     for FLAG in $image_cpp_flags; do
         BUILD_ARGS+=("--cpp-flag=-D$FLAG")

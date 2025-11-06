@@ -14,7 +14,6 @@ setterm --foreground blue
 echo "# Cleaning filesystem for OSTree..."
 setterm --foreground default
 
-find / -name sysroot
 rm -rf /boot /home /root /usr/local /srv /var
 mkdir -p /boot
 mkdir -p /sysroot
@@ -26,7 +25,7 @@ mkdir -p /var/srv
 ln -s /var/home /home
 ln -s /var/roothome /root
 ln -s /var/srv /srv
-ln -s /sysroot/ostree /ostree
+ln -s sysroot/ostree /ostree
 printf "[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n" | tee "/usr/lib/ostree/prepare-root.conf"
 
 setterm --foreground blue

@@ -26,6 +26,34 @@ EOF
 
 systemctl preset systemd-resolved.service
 
+cat >/usr/lib/sysusers.d/Debian-snmp.conf <<'EOF'
+u Debian-snmp -
+EOF
+
+cat >/usr/lib/sysusers.d/bind.conf <<'EOF'
+u bind -
+EOF
+
+cat >/usr/lib/sysusers.d/clamav.conf <<'EOF'
+u clamav -
+EOF
+
+cat >/usr/lib/sysusers.d/debian-spamd.conf <<'EOF'
+u debian-spamd -
+EOF
+
+cat >/usr/lib/sysusers.d/greylist.conf <<'EOF'
+u greylist -
+EOF
+
+cat >/usr/lib/sysusers.d/mysql.conf <<'EOF'
+u mysql -
+EOF
+
+cat >/usr/lib/sysusers.d/ntpsec.conf <<'EOF'
+u ntpsec -
+EOF
+
 cat >/usr/lib/sysusers.d/ssh.conf <<'EOF'
 g _ssh -
 EOF
@@ -37,7 +65,92 @@ EOF
 setterm --foreground blue
 echo "# Applying custom signing policy..."
 setterm --foreground default
-mv /etc/containers/policy.json /etc/containers/policy.json-upstream
-mv /usr/etc/containers/policy.json /etc/containers/
-rm -fr /usr/etc
-sed -i 's/ublue-os/spamtagger/' /etc/containers/policy.json
+
+cat <<EOF > /etc/containers/policy.json
+cat /etc/containers/policy.json
+{
+  "default": [
+    {
+      "type": "reject"
+    }
+  ],
+  "transports": {
+    "docker": {
+      "ghcr.io/spamtagger": [
+        {
+          "type": "sigstoreSigned",
+          "keyPaths": [
+            "/etc/pki/containers/spamtagger.pub",
+          ],
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ],
+    },
+    "docker-daemon": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "atomic": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "containers-storage": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "dir": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "oci": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "oci-archive": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "docker-archive": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "tarball": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    }
+  }
+}
+EOF
+mkdir -p /etc/pki/containers/
+curl https://raw.githubusercontent.com/SpamTagger/SpamTagger-Bootc/refs/heads/main/cosign.pub > /etc/pki/containers/spamtagger.pub

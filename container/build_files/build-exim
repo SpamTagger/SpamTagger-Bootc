@@ -54,14 +54,6 @@ setterm --foreground blue
 echo "# Copying built files to DEB directory and building DEB..."
 setterm --foreground default
 
-/* Hypothetically provide support for other architectures supported by Debian*/
-ARCH=$(arch)
-[[ "$ARCH" == "aarch64" ]] && ARCH=arm64
-[[ "$ARCH" == "armv7l" ]] && ARCH=armhf
-[[ "$ARCH" == "x86_64" ]] && ARCH=amd64
-[[ "$ARCH" == "ppc64le" ]] && ARCH=ppc64el
-/* riscv64 and s390x map directly */
-
 cp -a /opt/exim4 /st-exim/opt/
 cp -r /run/build_files/exim-files/ /st-exim/DEBIAN
 sed -i 's/__INSTVER__/'$EXIM_VERSION'/' /st-exim/DEBIAN/control

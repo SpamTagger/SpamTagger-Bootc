@@ -98,9 +98,11 @@ EOF
 setterm --foreground blue
 echo "# Installing DCC from OBS..."
 setterm --foreground default
-OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/Debian_13/x86_64/"
-VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc-[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
-wget $OBS_PATH$VERSION
+
+cd /tmp/
+OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/Debian_13/$ARCH/"
+VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc_[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
+curl -L $OBS_PATH/$VERSION -o $VERSION 2>/dev/null
 dpkg -i $VERSION
 rm $VERSION
 
