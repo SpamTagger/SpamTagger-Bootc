@@ -26,6 +26,30 @@ EOF
 
 systemctl preset systemd-resolved.service
 
+setterm --foreground blue
+echo "# Adding approved /var directories..."
+setterm --foreground default
+
+cat >>/usr/lib/tmpfiles.d/ostree-tmpfiles.conf <<'EOF'
+  d /var/home 0755 root root - -
+  d /var/roothome 0755 root root - -
+  d /var/srv 0755 root root - -
+EOF
+
+cat >/usr/lib/tmpfiles.d/apt.conf <<EOF
+d /var/lib/apt - - - -
+d /var/lib/apt/lists - - - -
+d /var/lib/apt/lists/partial - - - -
+d /var/cache/apt/ - - - -
+d /var/cache/apt/archives - - - -
+d /var/cache/apt/archives/partial - - - -
+d /var/lib/dpkg - - - -
+EOF
+
+setterm --foreground blue
+echo "# Setting up approved users and groups..."
+setterm --foreground default
+
 cat >/usr/lib/sysusers.d/Debian-snmp.conf <<'EOF'
 u Debian-snmp -
 EOF
@@ -46,18 +70,10 @@ cat >/usr/lib/sysusers.d/greylist.conf <<'EOF'
 u greylist -
 EOF
 
-cat >/usr/lib/sysusers.d/mysql.conf <<'EOF'
-u mysql -
-EOF
-
 cat >/usr/lib/sysusers.d/ntpsec.conf <<'EOF'
 u ntpsec -
 EOF
 
 cat >/usr/lib/sysusers.d/ssh.conf <<'EOF'
 g _ssh -
-EOF
-
-cat >/usr/lib/sysusers.d/ssl-cert.conf <<'EOF'
-g ssl-cert -
 EOF

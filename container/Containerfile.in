@@ -136,6 +136,11 @@ RUN --mount=type=cache,dst=/var/cache \
 #endif /* PLUS */
 RUNEOF
 
+/* Copy in file which contains the package list for this variant */
+COPY build_files/VARIANT_SUB/cleanup /run/build_files/variant-cleanup
+/* Copy in file which contains the package list for the specific version of this variant */
+COPY build_files/VARIANT_SUB/VERSION_SUB/cleanup /run/build_files/version-cleanup
+
 /* Run Bash recipe to clean up unnecessary files and packages */
 RUN --mount=type=cache,dst=/var/cache \
   --mount=type=tmpfs,dst=/var/log \

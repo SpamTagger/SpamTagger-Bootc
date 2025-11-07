@@ -7,10 +7,10 @@ e2fsprogs
 fdisk
 firmware-linux-free
 firmware-linux-nonfree
+libavahi-common-dev
+libavahi-client-dev
+libavahi-glib-dev
 libnss-systemd
-libostree-dev
-linux-image-generic
-make
 openssh-client
 openssh-server
 rsync

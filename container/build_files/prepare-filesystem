@@ -22,6 +22,7 @@ setterm --foreground default
 
 apt-get update
 apt install --assume-yes --no-install-recommends --no-install-suggests \
+  linux-image-$ARCH \
   $( cat /run/build_files/prepare-filesystem-deps | tr '\n' ' ' )
 
 setterm --foreground blue
@@ -57,6 +58,13 @@ ls /usr/lib/systemd/system-generators
 chmod +x "${COREOS_SULOGIN_GENERATOR_PATH}"
 
 setterm --foreground blue
+echo "# Configuring BootC..."
+setterm --foreground default
+
+sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/bootc update --quiet|' /usr/lib/systemd/system/bootc-fetch-apply-updates.service
+sed -i 's|^OnUnitInactiveSec=.*|OnUnitInactiveSec=7d\nPersistent=true|' /usr/lib/systemd/system/bootc-fetch-apply-updates.timer
+
+setterm --foreground blue
 echo "# Setting minimum RAM size..."
 setterm --foreground default
 
@@ -65,9 +73,3 @@ cat >/usr/lib/systemd/zram-generator.conf <<'EOF'
 zram-size = min(ram, 4096)
 EOF
 
-setterm --foreground blue
-echo "# Configuring BootC..."
-setterm --foreground default
-
-sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/bootc update --quiet|' /usr/lib/systemd/system/bootc-fetch-apply-updates.service
-sed -i 's|^OnUnitInactiveSec=.*|OnUnitInactiveSec=7d\nPersistent=true|' /usr/lib/systemd/system/bootc-fetch-apply-updates.timer

@@ -155,6 +155,7 @@ php-zip
 podman
 poppler-utils
 procps
+pwgen
 python-is-python3
 pyzor
 qemu-guest-agent
