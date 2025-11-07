@@ -37,3 +37,96 @@ cat >>/usr/lib/tmpfiles.d/ostree-tmpfiles.conf <<'EOF'
   d /var/roothome 0755 root root - -
   d /var/srv 0755 root root - -
 EOF
+
+setterm --foreground blue
+echo "# Applying custom signing policy..."
+setterm --foreground default
+
+cat <<EOF > /etc/containers/policy.json
+{
+  "default": [
+    {
+      "type": "reject"
+    }
+  ],
+  "transports": {
+    "docker": {
+      "ghcr.io/spamtagger": [
+        {
+          "type": "sigstoreSigned",
+          "keyPaths": [
+            "/etc/pki/containers/spamtagger.pub"
+          ],
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ],
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "docker-daemon": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "atomic": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "containers-storage": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "dir": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "oci": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "oci-archive": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "docker-archive": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    },
+    "tarball": {
+      "": [
+        {
+          "type": "insecureAcceptAnything"
+        }
+      ]
+    }
+  }
+}
+EOF
+cat /etc/containers/policy.json
+mkdir -p /etc/pki/containers/
+cp /run/build_files/cosign.pub /etc/pki/containers/spamtagger.pub

@@ -155,6 +155,9 @@ RUNEOF
 /* Don't use SELinux features of OSTree */
 ENV OSTREE_SELINUX_ENABLE=0
 
+/* Copy in cosign.pub key */
+COPY build_files/cosign.pub /run/build_files/cosign.pub
+
 /* Run Bash recipe to finalize image */
 RUN bash <<'RUNEOF'
 #include "build_files/finalize"
