@@ -490,7 +490,7 @@ build-disk $variant="" $version="" $registry="": start-machine
         {{ if env('CI', '') != '' { '--progress verbose' } else { '--progress auto' } }} \
         --type qcow2 \
         --use-librepo=True \
-        --rootfs xfs \
+        --rootfs ext4 \
         $fq_name
 
      # Sparsify and compress

@@ -14,13 +14,11 @@ setterm --foreground blue
 echo "# Cleaning filesystem for OSTree..."
 setterm --foreground default
 
-rm -rf /boot /home /root /usr/local /srv /var
+rm -rf /boot /home /root /usr/local /srv /var/lib/dpkg/info /opt
+mv /var /oldvar
 mkdir -p /boot
 mkdir -p /sysroot
 mkdir -p /usr/lib/ostree
-mkdir -p /var/lib/apt/lists
-mkdir -p /var/cache/apt/archives/partial
-mkdir -p /var/lib/dpkg
 mkdir -p /var/home
 mkdir -p /var/roothome
 mkdir -p /var/srv
@@ -28,12 +26,54 @@ ln -s /var/home /home
 ln -s /var/roothome /root
 ln -s /var/srv /srv
 ln -s sysroot/ostree /ostree
+mv /oldvar/lib/apt /var/lib/
+mv /oldvar/lib/dpkg /var/lib/
+mv /oldvar/cache/apt /var/cache/
 printf "[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n" | tee "/usr/lib/ostree/prepare-root.conf"
+
+cat >/usr/lib/tmpfiles.d/apt.conf <<EOF
+d /var/cache/apt/ - - - -
+d /var/cache/apt/archives - - - -
+d /var/cache/apt/archives/partial - - - -
+d /var/lib/apt - - - -
+d /var/lib/apt/lists - - - -
+d /var/lib/apt/lists/partial - - - -
+d /var/lib/dpkg - - - -
+d /var/lib/dpkg/alternatives 0755 root root - -
+d /var/lib/dpkg/parts 0755 root root - -
+d /var/lib/dpkg/triggers 0755 root root - -
+d /var/lib/dpkg/updates 0755 root root - -
+d /var/lib/mirrors 0755 root root - -
+d /var/lib/mirrors/partial 0755 root root - -
+d /var/lib/periodic 0755 root root - -
+d /var/log/apt - - - -
+EOF
+rm -rf /var/lib/dpkg/alternatives \
+  /var/lib/dpkg/arch-native \
+  /var/lib/dpkg/available \
+  /var/lib/dpkg/cmethopt \
+  /var/lib/dpkg/diversions \
+  /var/lib/dpkg/diversions-old \
+  /var/lib/dpkg/lock \
+  /var/lib/dpkg/lock-frontend \
+  /var/lib/dpkg/parts \
+  /var/lib/dpkg/status \
+  /var/lib/dpkg/status-old \
+  /var/lib/dpkg/statoverride-old \
+  /var/lib/dpkg/statoverride \
+  /var/lib/dpkg/triggers \
+  /var/lib/dpkg/updates \
+  /var/lib/extended_states \
+  /var/lib/mirrors/partial \
+  /var/lib/periodic
+
+
 
 setterm --foreground blue
 echo "# Applying custom signing policy..."
 setterm --foreground default
 
+rm -rf /usr/etc
 cat <<EOF > /etc/containers/policy.json
 {
   "default": [

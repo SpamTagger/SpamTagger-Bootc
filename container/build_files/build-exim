@@ -33,18 +33,17 @@ git fetch --tags
 git checkout exim-${EXIM_VERSION}
 
 setterm --foreground blue 
-echo "# Adding spamtagger user and build directories..."
+echo "# Adding spamtagger user..."
 setterm --foreground default
 
 useradd spamtagger --system --create-home --user-group --home-dir /var/spamtagger --shell /usr/sbin/nologin
 cd src
-mkdir Local
-mkdir -p /st-exim/opt
 
 setterm --foreground blue 
 echo "# Importing modified build options and building..."
 setterm --foreground default
 
+mkdir Local
 cp /run/build_files/exim-files/EDITME Local/Makefile
 ldconfig
 EXIM_RELEASE_VERSION=${EXIM_VERSION} make -j$(lscpu | grep '^CPU(s):' | awk '{ print $2 }')
@@ -54,7 +53,8 @@ setterm --foreground blue
 echo "# Copying built files to DEB directory and building DEB..."
 setterm --foreground default
 
-cp -a /opt/exim4 /st-exim/opt/
+mkdir /st-exim
+cp -a /usr/exim /st-exim/usr/
 cp -r /run/build_files/exim-files/ /st-exim/DEBIAN
 sed -i 's/__INSTVER__/'$EXIM_VERSION'/' /st-exim/DEBIAN/control
 sed -i 's/__INSTSIZE__/'$(du -sk /st-exim | cut -f1)'/' /st-exim/DEBIAN/control

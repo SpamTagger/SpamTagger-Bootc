@@ -10,8 +10,6 @@ echo "# Configuring System..."
 echo "#######################"
 setterm --foreground default
 
-sed -i 's|^HOME=.*|HOME=/var/home|' /etc/default/useradd
-
 setterm --foreground blue
 echo "# Setting up systemd-resolved..."
 setterm --foreground default
@@ -34,16 +32,7 @@ cat >>/usr/lib/tmpfiles.d/ostree-tmpfiles.conf <<'EOF'
   d /var/home 0755 root root - -
   d /var/roothome 0755 root root - -
   d /var/srv 0755 root root - -
-EOF
-
-cat >/usr/lib/tmpfiles.d/apt.conf <<EOF
-d /var/lib/apt - - - -
-d /var/lib/apt/lists - - - -
-d /var/lib/apt/lists/partial - - - -
-d /var/cache/apt/ - - - -
-d /var/cache/apt/archives - - - -
-d /var/cache/apt/archives/partial - - - -
-d /var/lib/dpkg - - - -
+  d /var/log 0755 root root - -
 EOF
 
 setterm --foreground blue
