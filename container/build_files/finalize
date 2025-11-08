@@ -86,9 +86,7 @@ cat <<EOF > /etc/containers/policy.json
       "ghcr.io/spamtagger": [
         {
           "type": "sigstoreSigned",
-          "keyPaths": [
-            "/etc/pki/containers/spamtagger.pub"
-          ],
+          "keyPaths": "/etc/pki/containers/spamtagger.pub",
           "signedIdentity": {
             "type": "matchRepository"
           }
@@ -106,59 +104,17 @@ cat <<EOF > /etc/containers/policy.json
           "type": "insecureAcceptAnything"
         }
       ]
-    },
-    "atomic": {
-      "": [
-        {
-          "type": "insecureAcceptAnything"
-        }
-      ]
-    },
-    "containers-storage": {
-      "": [
-        {
-          "type": "insecureAcceptAnything"
-        }
-      ]
-    },
-    "dir": {
-      "": [
-        {
-          "type": "insecureAcceptAnything"
-        }
-      ]
-    },
-    "oci": {
-      "": [
-        {
-          "type": "insecureAcceptAnything"
-        }
-      ]
-    },
-    "oci-archive": {
-      "": [
-        {
-          "type": "insecureAcceptAnything"
-        }
-      ]
-    },
-    "docker-archive": {
-      "": [
-        {
-          "type": "insecureAcceptAnything"
-        }
-      ]
-    },
-    "tarball": {
-      "": [
-        {
-          "type": "insecureAcceptAnything"
-        }
-      ]
     }
   }
 }
 EOF
-cat /etc/containers/policy.json
+
+mkdir -p /etc/containers/registries.d/
+cat <<EOF > /etc/containers/registries.d/spamtagger
+docker:
+  ghcr.io/spamtagger:
+    use-sigstore-attachments: true
+EOF
+
 mkdir -p /etc/pki/containers/
 cp /run/build_files/cosign.pub /etc/pki/containers/spamtagger.pub

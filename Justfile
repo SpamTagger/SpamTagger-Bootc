@@ -467,72 +467,75 @@ build-disk $variant="" $version="" $registry="": start-machine
         rm -rf "$COPYTMP"
     fi
 
-    # Pull Bootc Image Builder
-    {{ podman-remote }} pull --retry 3 {{ bootc-image-builder }}
-
     # Remove existing image, if it exists
-    if [ -f "{{ builddir /'disks/$variant-$version.qcow2' }}" ]; then
-        echo Removing existing disk image {{ builddir /'disks/$variant-$version.qcow2' }}
-        rm -f {{ builddir /'disks/$variant-$version.qcow2' }}
+    if [ -f "{{ builddir /'disks/$variant-$version.img' }}" ]; then
+        echo Removing existing disk image {{ builddir /'disks/$variant-$version.img' }}
+        rm -f {{ builddir /'disks/$variant-$version.img' }}
     fi
 
-    # Build Disk Image
-    {{ podman-remote }} run \
-        --rm \
-        -it \
-        --privileged \
-        --pull=newer \
-        --security-opt label=type:unconfined_t \
-        -v {{ builddir / '$variant-$version' }}.toml:/config.toml:ro \
-        -v {{ builddir }}/disks:/output \
-        -v /var/lib/containers/storage:/var/lib/containers/storage \
-        quay.io/centos-bootc/bootc-image-builder:latest \
-        {{ if env('CI', '') != '' { '--progress verbose' } else { '--progress auto' } }} \
-        --type qcow2 \
-        --use-librepo=True \
-        --rootfs ext4 \
-        $fq_name
-
-     # Sparsify and compress
-     echo Shrinking disk image
-     qemu-img convert -c -O qcow2 {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
-     rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version*' }}
+    if [[ ! -d {{ builddir }}/disks ]]; then
+      mkdir {{ builddir }}/disks
+    fi
+    if [[ ! -e {{ builddir }}/disks/$variant-$version.img ]]; then
+      fallocate -l 15G "{{ builddir }}/disks/$variant-$version.img"
+    fi
+    sudo podman run \
+      --rm --privileged --pid=host \
+      -it \
+      -v /sys/fs/selinux:/sys/fs/selinux \
+      -v /etc/containers:/etc/containers:Z \
+      -v /var/lib/containers:/var/lib/containers:Z \
+      -v /dev:/dev \
+      -e BOOTC_SETENFORCE0_FALLBACK=1 \
+      -v "{{ builddir }}/disks:/data" \
+      --security-opt label=type:unconfined_t \
+      "$fq_name" bootc install to-disk --composefs-backend --via-loopback "/data/$variant-$version.img" --filesystem ext4 --wipe --bootloader systemd
+    echo DEBUG
 
 # Convert disk to supported other VM formats
 [group('BIB')]
-convert-disk $variant="" $version="" $diskformat="":
+convert-disk $diskformat="" $variant="" $version="":
     #!/usr/bin/env bash
     {{ default-inputs }}
     : "${diskformat:=all}"
     {{ get-names }}
     set -ou pipefail
-    if [ ! -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
+    if [ ! -f {{ builddir / 'disks/$variant-$version.img' }} ]; then
         # Attempt to build if not already built
         {{ just }} build-disk $variant $version
-        if [ ! -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
-            echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$image_name-$version-$variant\" not built" >&2 && exit 1
+        if [ ! -f {{ builddir / 'disks/$variant-$version.img' }} ]; then
+            echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$variant-$version.img\" not built" >&2 && exit 1
         fi
     fi
-    if [ "$diskformat" == "vmdk" || [ "$diskformat" == "all" ]; then
-        if [ -f "{{ builddir / 'disks/$variant-$version.vmdk' }}" ]; then
+    if [ "$diskformat" == "qcow2" ] || [ "$diskformat" == "all" ]; then
+        if [ -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
+            echo Removing existing disk image {{ builddir / 'disks/$variant-$version.qcow2' }}
+            rm -f {{ builddir / 'disks/$variant-$version.qcow2' }}
+        fi
+        echo Creating QCOW2 disk
+        qemu-img convert -p -c -O qcow2 {{ builddir /'disks/$variant-$version.img' }} {{ builddir /'disks/$variant-$version.qcow2' }}
+        #rm -rf {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version*' }}
+    fi
+    if [ "$diskformat" == "vmdk" ] || [ "$diskformat" == "all" ]; then
+        if [ -f {{ builddir / 'disks/$variant-$version.vmdk' }} ]; then
             echo Removing existing disk image {{ builddir / 'disks/$variant-$version.vmdk' }}
             rm -f {{ builddir / 'disks/$variant-$version.vmdk' }}
         fi
         echo Creating VMDK disk
-        qemu-img convert -p -f qcow2 -O vmdk -o adapter_type=lsilogic,subformat=streamOptimized,compat6 {{ builddir / 'disks/$variant-$version.qcow2' }} {{ builddir / 'disks/$variant-$version.vmdk' }}
+        qemu-img convert -p -O vmdk -o adapter_type=lsilogic,subformat=streamOptimized,compat6 {{ builddir / 'disks/$variant-$version.img' }} {{ builddir / 'disks/$variant-$version.vmdk' }}
     fi
     if [ "$diskformat" == "vhdx" ] || [ "$diskformat" == "all" ]; then
-        if [ -f "{{ builddir / 'disks/$variant-$version.vhdx' }}" ]; then
+        if [ -f {{ builddir / 'disks/$variant-$version.vhdx' }} ]; then
             echo Removing existing disk image {{ builddir / 'disks/$variant-$version.vhdx' }}
             rm -f {{ builddir / 'disks/$variant-$version.vhdx' }}
         fi
         echo Creating VHDX disk
-        qemu-img convert -p -f qcow2 -O vhdx -o subformat=dynamic,block_size=1M {{ builddir / 'disks/$variant-$version.qcow2' }} {{ builddir / 'disks/$variant-$version.vhdx' }}
+        qemu-img convert -p -O vhdx -o subformat=dynamic,block_size=1M {{ builddir / 'disks/$variant-$version.img' }} {{ builddir / 'disks/$variant-$version.vhdx' }}
     fi
 
 # Bundle VM images into compressed archives with bundled files
 [group('BIB')]
-bundle-vm $variant="" $version="" $vmformat="":
+bundle-vm $vmformat="" $variant="" $version="":
     #!/usr/bin/env bash
     {{ default-inputs }}
     : "${vmformat:=all}"
