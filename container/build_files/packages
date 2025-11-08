@@ -75,12 +75,14 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   libhtml-tagset-perl \
   libinline-c-perl \
   libio-compress-perl \
+  libio-interactive-perl \
   libio-socket-inet6-perl \
   libio-socket-ssl-perl \
   libio-string-perl \
   libio-stringy-perl \
   libipc-run-perl \
   libipc-run3-perl \
+  libipc-shareable-perl \
   libjson-xs-perl \
   libldap-dev \
   libldap-common \
@@ -123,6 +125,7 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   librrdtool-oo-perl \
   libsendmail-pmilter-perl \
   libsnmp-dev \
+  libsnmp-perl \
   libspf2-dev \
   libspf2-2 \
   libssl3 \
@@ -130,6 +133,7 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   libsys-hostname-long-perl \
   libsys-sigaction-perl \
   libsqlite3-dev \
+  libterm-readkey-perl \
   libtest-manifest-perl \
   libtest-pod-coverage-perl \
   libtest-pod-perl \
@@ -139,6 +143,7 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   lsb-release \
   lzma \
   net-tools \
+  snmpd \
   $(
     cat /run/build_files/variant-packages \
       /run/build_files/version-packages |
