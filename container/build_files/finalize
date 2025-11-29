@@ -14,41 +14,25 @@ setterm --foreground blue
 echo "# Cleaning filesystem for OSTree..."
 setterm --foreground default
 
-rm -rf /boot /home /root /usr/local /srv /var/lib/dpkg/info /opt
-mv /var /oldvar
-mkdir -p /boot
-mkdir -p /sysroot
-mkdir -p /usr/lib/ostree
-mkdir -p /var/home
+rm -rf /boot /home /root /usr/local /srv
+mkdir -p /boot /sysroot /usr/lib/ostree
 mkdir -p /var/roothome
 mkdir -p /var/srv
-ln -s /var/home /home
-ln -s /var/roothome /root
-ln -s /var/srv /srv
+ln -s var/home /home
+ln -s var/opt /opt
+ln -s var/roothome /root
 ln -s sysroot/ostree /ostree
-mv /oldvar/lib/apt /var/lib/
-mv /oldvar/lib/dpkg /var/lib/
-mv /oldvar/cache/apt /var/cache/
-printf "[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n" | tee "/usr/lib/ostree/prepare-root.conf"
 
-cat >/usr/lib/tmpfiles.d/apt.conf <<EOF
-d /var/cache/apt/ - - - -
-d /var/cache/apt/archives - - - -
-d /var/cache/apt/archives/partial - - - -
-d /var/lib/apt - - - -
-d /var/lib/apt/lists - - - -
-d /var/lib/apt/lists/partial - - - -
-d /var/lib/dpkg - - - -
-d /var/lib/dpkg/alternatives 0755 root root - -
-d /var/lib/dpkg/parts 0755 root root - -
-d /var/lib/dpkg/triggers 0755 root root - -
-d /var/lib/dpkg/updates 0755 root root - -
-d /var/lib/mirrors 0755 root root - -
-d /var/lib/mirrors/partial 0755 root root - -
-d /var/lib/periodic 0755 root root - -
-d /var/log/apt - - - -
-EOF
-rm -rf /var/lib/dpkg/alternatives \
+# /* Remove everything except necessary APT files from /var */
+mv /var /oldvar
+mkdir -p /var/lib /var/cache /var/log/apt
+mv /oldvar/lib/apt /var/lib/
+mv /oldvar/cache/apt /var/cache/
+mv /oldvar/lib/dpkg /var/lib/
+rm -rf /oldvar \
+  /var/cache/apt/archives \
+  /var/lib/apt/lists \
+  /var/lib/dpkg/alternatives \
   /var/lib/dpkg/arch-native \
   /var/lib/dpkg/available \
   /var/lib/dpkg/cmethopt \
@@ -66,8 +50,37 @@ rm -rf /var/lib/dpkg/alternatives \
   /var/lib/extended_states \
   /var/lib/mirrors/partial \
   /var/lib/periodic
+mkdir /var/lib/apt/lists
 
+setterm --foreground blue
+echo "# Adding approved BootC directories..."
+setterm --foreground default
 
+echo "$(for dir in opt usrlocal home srv mnt ; do echo "d /var/$dir 0755 root root -" ; done)" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf
+echo "d /var/roothome 0700 root root -" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf
+echo "d /run/media 0755 root root -" | tee -a /usr/lib/tmpfiles.d/bootc-base-dirs.conf
+
+cat >/usr/lib/tmpfiles.d/apt.conf <<EOF
+d /var/cache/apt 0755 root root - -
+d /var/lib/apt 0755 root root - -
+d /var/lib/apt/lists 0755 root root - -
+d /var/lib/apt/lists/auxfiles 0755 _apt root - -
+d /var/lib/apt/lists/partial 0700 _apt root - -
+d /var/lib/apt/mirrors 0755 root root - -
+d /var/lib/apt/mirrors/partial 0755 root root - -
+d /var/lib/apt/periodic 0755 root root - -
+d /var/lib/dpkg 0755 root root - -
+d /var/lib/dpkg/alternatives 0755 root root - -
+d /var/lib/dpkg/parts 0755 root root - -
+d /var/lib/dpkg/triggers 0755 root root - -
+d /var/lib/dpkg/updates 0755 root root - -
+d /var/lib/mirrors 0755 root root - -
+d /var/lib/mirrors/partial 0755 root root - -
+d /var/lib/periodic 0755 root root - -
+d /var/log/apt - - - -
+f /var/lib/apt/extended_states
+f /var/lib/apt/lists/lock
+EOF
 
 setterm --foreground blue
 echo "# Applying custom signing policy..."

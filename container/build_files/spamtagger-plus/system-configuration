@@ -37,6 +37,13 @@ mv /usr/spamtagger/www/vendor/Zend.git/library/Zend /usr/spamtagger/www/vendor/Z
 rm -rf /usr/spamtagger/www/vendor/Zend.git
 
 setterm --foreground blue
+echo "# Configuring BootC..."
+setterm --foreground default
+
+mkdir -p /usr/share/bootc
+echo "SpamTagger Plus Appliance" > /usr/share/bootc/description
+
+setterm --foreground blue
 echo "# Updating os-release..."
 setterm --foreground default
 sed -i 's|^BUG_REPORT_URL=.*|BUG_REPORT_URL="https://github.com/SpamTagger/SpamTagger-Plus/issues"|' /usr/lib/os-release
@@ -45,6 +52,12 @@ echo 'VARIANT="SpamTagger-Plus"' >>/usr/lib/os-release
 setterm --foreground blue
 echo "# Updating /etc/issue..."
 setterm --foreground default
+
+setterm --foreground blue
+echo "# Updating /etc/motd..."
+setterm --foreground default
+
+echo "Welcome to SpamTagger Plus!" >> /etc/motd
 
 setterm --foreground blue
 echo "# Setting default password (STPassw0rd)..."

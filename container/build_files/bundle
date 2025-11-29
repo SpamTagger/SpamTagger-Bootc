@@ -1,0 +1,32 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "####################"
+echo "# Bundling image..."
+echo "####################"
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Creating OSTree Repo..."
+setterm --foreground default
+
+mkdir -p "$OSTREE_REPO"
+ostree --repo="$OSTREE_REPO" init --mode=bare-user
+
+setterm --foreground blue
+echo "# Commiting ComposeFS from /rootfs..."
+setterm --foreground default
+
+ostree --repo="$OSTREE_REPO" commit --branch="$BRANCH" \
+  --generate-sizes --generate-composefs-metadata /rootfs
+
+setterm --foreground blue
+echo "# Creating Deployment..."
+setterm --foreground default
+
+mkcomposefs /rootfs /export/rootfs.cfs \
+  --create-backing-backing-store /export/composfs-objects

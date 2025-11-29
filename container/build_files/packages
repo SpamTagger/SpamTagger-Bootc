@@ -149,6 +149,9 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
       /run/build_files/version-packages |
       tr '\n' ' '
   )
+rm -rf /var/lib/apt/lists
+mkdir /var/lib/apt/lists
+apt-get clean -y
 
 setterm --foreground blue
 echo "# Installing Exim..."

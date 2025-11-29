@@ -26,28 +26,6 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   $( cat /run/build_files/prepare-filesystem-deps | tr '\n' ' ' )
 
 setterm --foreground blue
-echo "# Copying OSTree and BootC from build container..."
-setterm --foreground default
-
-cd /run/bootc-builder/bootc
-for i in $(ls /run/bootc-builder/build/); do
-  rsync -avr /run/bootc-builder/build/$i /
-done
-
-setterm --foreground blue
-echo "# Restoring links..."
-setterm --foreground default
-
-for i in $(find /run/bootc-builder/build -type l); do
-  FILE=$(echo $i | sed 's#/run/bootc-builder/build##')
-  LINK=$(stat --printf="%N" $i | cut -d "'" -f 4 | sed 's#/run/bootc-builder/build##' | sed 's#\.\./\.\.\/##')
-  echo "$i = $FILE -> $LINK"
-  rm $FILE
-  ln -s $LINK $FILE
-done
-ln -svf /usr/lib/libostree* /lib/$(arch)-linux-gnu/
-
-setterm --foreground blue
 echo "# Configuring CoreOS boot recovery..."
 setterm --foreground default
 
@@ -73,3 +51,15 @@ cat >/usr/lib/systemd/zram-generator.conf <<'EOF'
 zram-size = min(ram, 4096)
 EOF
 
+setterm --foreground blue
+echo "# Configuring OSTree..."
+setterm --foreground default
+
+cat >/usr/lib/ostree/prepare-root.conf <<EOF
+[composefs]
+enabled = signed
+[sysroot]
+readonly = true
+[root]
+transient = true
+EOF

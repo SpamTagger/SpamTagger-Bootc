@@ -20,9 +20,11 @@ setterm --foreground blue
 echo "# Generating kernel ..."
 setterm --foreground default
 
-export DRACUT_NO_XATTR=1
 export KERNEL_VERSION="$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")"
-dracut --debug --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION" "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"
+export DRACUT_NO_XATTR=1
+mkdir -p /etc/dracut.conf.d
+printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee /etc/dracut.conf.d/fix-bootc.conf
+dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$KERNEL_VERSION" "/usr/lib/modules/$KERNEL_VERSION/initramfs.img"
 mv /boot/vmlinuz-${KERNEL_VERSION}* "/usr/lib/modules/$KERNEL_VERSION/vmlinuz"
 
 setterm --foreground blue
@@ -35,5 +37,10 @@ if [[ ! "$REMOVE" == "" ]]; then
 fi
 apt-get autoremove -y --purge
 apt-get clean
-rm -rf /var/cache/apt
-rm -rf /var/lib/apt/list*
+rm -rf /var/lib/dpkg/info
+
+setterm --foreground blue
+echo "# Remove unneeded files..."
+setterm --foreground default
+
+rm -rf /opt /var/backups/ /var/lib/mysql /var/local /var/mail /var/spool/mail /var/www

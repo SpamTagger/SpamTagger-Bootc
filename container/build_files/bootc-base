@@ -1,0 +1,52 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "#######################################"
+echo "# Creating minimal Debian with BootC..."
+echo "#######################################"
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Installing dependencies..."
+setterm --foreground default
+
+rm /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages
+
+apt-get update
+apt install --assume-yes --no-install-recommends --no-install-suggests \
+  $( cat /run/build_files/bootc-base-deps | tr '\n' ' ' )
+rm -rf /var/lib/apt/lists
+mkdir /var/lib/apt/lists
+apt-get clean -y
+
+setterm --foreground blue
+echo "# Copying in ComposeFS, OSTree, and BootC..."
+setterm --foreground default
+
+for i in $(ls /build); do
+  rsync -av /build/$i /
+done
+
+# /*
+# setterm --foreground blue
+# echo "# Restoring links..."
+# setterm --foreground default
+
+# for i in $(find /build -type l); do
+#   FILE=$(echo $i | sed 's#/build##')
+#   LINK=$(stat --printf="%N" $i | cut -d "'" -f 4 | sed 's#/build##' | sed 's#\.\./\.\.\/##')
+#   echo "$i = $FILE -> $LINK"
+#   rm $FILE
+#   ln -s $LINK $FILE
+# done
+# for i in ostree-container ostree-ima-sign ostree-provisional-repair; do
+#   ln -sf /usr/bin/bootc /usr/libexec/libostree/ext/$i;
+# done
+# mkdir -p /etc/grub.d/
+# ln -sf /usr/libexec/libostree/grub2-15_ostree /etc/grub.d/15_ostree
+# ln -svf /usr/lib/libostree* /usr/lib/$(arch)-linux-gnu/
+# */
