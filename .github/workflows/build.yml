@@ -27,9 +27,9 @@ jobs:
       matrix:
         include:
           - variant: spamtagger
-            version: 10
+            version: 13
           - variant: spamtagger-plus
-            version: 10
+            version: 13
     container:
       image: "ghcr.io/ublue-os/devcontainer:latest"
       options: "--privileged --volume /var/lib/containers:/var/lib/containers --security-opt seccomp=unconfined --security-opt label=disable --user 0:0"
