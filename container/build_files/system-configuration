@@ -1,0 +1,13 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "#######################"
+echo "# Configuring System..."
+echo "#######################"
+setterm --foreground default
+
+echo -n 'spamtagger' > /etc/hostname

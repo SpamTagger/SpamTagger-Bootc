@@ -14,31 +14,33 @@ spamtagger-plus-base: &spamtagger-plus-base
   cppFlags: ["PLUS"]
   product: spamtagger-plus
   upstream: centos
-spamtagger-10: &spamtagger-10
+spamtagger-13: &spamtagger-13
   <<: *spamtagger-base
   # TODO: Implement a Renovate Regex
-  source: quay.io/centos-bootc/centos-bootc:stream10
-  version: 10
+  source: ghcr.io/frostyard/debian-bootc-core:latest
+  version: 13
+  exim: 4.99
   default: false
-spamtagger-plus-10: &spamtagger-plus-10
+spamtagger-plus-13: &spamtagger-plus-13
   <<: *spamtagger-plus-base
   # TODO: Implement a Renovate Regex
-  source: quay.io/centos-bootc/centos-bootc:stream10
-  version: 10
+  source: ghcr.io/frostyard/debian-bootc-core:latest
+  version: 13
+  exim: 4.99
   default: true
 
 defaults:
   variant: spamtagger-plus
-  version: 10
+  version: 13
 
 images:
-  spamtagger-bootc-spamtagger-10:
+  spamtagger-bootc-spamtagger-13:
     !!merge <<: 
-      - *spamtagger-10
+      - *spamtagger-13
       - *spamtagger-bootc-base
-  spamtagger-bootc-spamtagger-plus-10:
+  spamtagger-bootc-spamtagger-plus-13:
     !!merge <<:
-      - *spamtagger-plus-10
+      - *spamtagger-plus-13
       - *spamtagger-bootc-base
   rechunker:
     # TODO: Add Renovate Regex configuration

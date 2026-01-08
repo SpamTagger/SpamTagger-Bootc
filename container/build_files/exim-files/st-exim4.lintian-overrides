@@ -1,0 +1,4 @@
+st-exim4: elevated-privileges 4755 root/root [opt/exim4/sbin/exim4]
+st-exim4: package-contains-empty-directory [opt/exim4/lib/exim4/local_scan/]
+st-exim4: ldconfig-escape usr/sbin/exim4 [opt/exim4/lib/sendmail]
+st-exim4: debian-changelog-file-is-a-symlink [opt/exim4/share/doc/st-exim4/changelog.gz]

@@ -1,0 +1,176 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "################"
+echo "# Cleaning up..."
+echo "################"
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Freeing /usr/local..."
+setterm --foreground default
+
+rm -rf /usr/local /usr/etc
+
+setterm --foreground blue
+echo "# Remove unneeded packages and APT archives..."
+setterm --foreground default
+
+REMOVE=$(cat /run/build_files/variant-cleanup /run/build_files/version-cleanup | tr '\n' ' ')
+if [[ ! "$REMOVE" == "" ]]; then
+  apt-get purge -y $REMOVE
+fi
+apt-get autoremove -y --purge
+apt-get clean -y
+rm -rf /var/lib/dpkg/info /var/lib/apt
+mkdir -p /var/lib/apt/lists
+
+setterm --foreground blue
+echo "# Remove unneeded files..."
+setterm --foreground default
+
+rm -rf \
+  /etc/ssh/ssh_*_key* \
+  /opt \
+  /var/backups \
+  /var/cache/apt/archives \
+  /var/lib/bind \
+  /var/lib/clamav \
+  /var/lib/dpkg/alternatives \
+  /var/lib/dpkg/arch-native \
+  /var/lib/dpkg/available \
+  /var/lib/dpkg/cmethopt \
+  /var/lib/dpkg/diversions \
+  /var/lib/dpkg/diversions-old \
+  /var/lib/dpkg/info \
+  /var/lib/dpkg/lock \
+  /var/lib/dpkg/lock-frontend \
+  /var/lib/dpkg/parts \
+  /var/lib/dpkg/status \
+  /var/lib/dpkg/status-old \
+  /var/lib/dpkg/statoverride-old \
+  /var/lib/dpkg/statoverride \
+  /var/lib/dpkg/triggers \
+  /var/lib/dpkg/updates \
+  /var/lib/extended_states \
+  /var/lib/git \
+  /var/lib/greylistd \
+  /var/lib/grub \
+  /var/lib/fail2ban \
+  /var/lib/logrotate \
+  /var/lib/mirrors/partial \
+  /var/lib/mysql \
+  /var/lib/ntpsec \
+  /var/lib/os-prober \
+  /var/lib/periodic \
+  /var/lib/python \
+  /var/lib/shells.state \
+  /var/lib/sgml-base \
+  /var/lib/ucf \
+  /var/lib/vim \
+  /var/lib/xml-core \
+  /var/local \
+  /var/mail \
+  /var/spool/cron \
+  /var/spool/mail \
+  /var/spool/rsyslog \
+  /var/www
+
+setterm --foreground blue
+echo "# Adding approved /var directories..."
+setterm --foreground default
+
+for path in \
+  /var/lib/apache2 \
+  /var/lib/dracut \
+  /var/lib/pam \
+  /var/lib/php \
+  /var/lib/spamassassin \
+  /var/lib/systemd
+do
+  name=$(echo $path | sed 's/.*\///')
+  for i in $(find $path -type d); do
+    echo "d $i 0755 root root - -" >>/usr/lib/tmpfiles.d/$name-tmpfiles.conf
+  done
+  for i in $(find $path -type f); do
+    echo "f $i" >>/usr/lib/tmpfiles.d/$name-tmpfiles.conf
+  done
+done
+
+echo "d /var/lib/snmp 0755 Debian-snmp Debian-snmp - -" >>/usr/lib/tmpfiles.d/snmp-tmpfiles.conf
+for i in $(find /var/lib/mibs -type d); do
+  echo "d $i 0755 Debian-snmp Debian-snmp - -" >>/usr/lib/tmpfiles.d/snmp-tmpfiles.conf
+done
+for i in $(find /var/lib/mibs -type f); do
+  echo "f $i" >>/usr/lib/tmpfiles.d/snmp-tmpfiles.conf
+done
+
+cat >/usr/lib/tmpfiles.d/debconf-tmpfiles.conf <<'EOF'
+f /var/cache/debconf/config.dat
+f /var/cache/debconf/templates.dat
+f /var/cache/debconf/templates.dat-old
+f /var/cache/debconf/config.dat-old
+f /var/cache/debconf/passwords.dat
+EOF
+
+cat >/usr/lib/tmpfiles.d/wtmp-tmpfiles.conf <<'EOF'
+d /var/lib/wtmpdb 0755 root root - -
+L /var/lib/wtmpdb/wtmp.db - - - - ../../log/wtmp.db
+f /var/log/btmp
+f /var/log/lastlog
+f /var/log/wtmp
+EOF
+
+cat >/usr/lib/tmpfiles.d/dcc-tmpfiles.conf <<'EOF'
+d /var/lib/dcc 0755 dcc dcc - -
+d /var/lib/dcc/log 0710 dcc dcc - -
+L /var/lib/dcc/dcc_conf - - - - /etc/dcc/dcc_conf
+L /var/lib/dcc/flod - - - - /etc/dcc/flod
+L /var/lib/dcc/grey_flod - - - - /etc/dcc/grey_flod
+L /var/lib/dcc/grey_whitelist - - - - /etc/dcc/grey_whitelist
+L /var/lib/dcc/ids - - - - /etc/dcc/ids
+L /var/lib/dcc/map.txt - - - - /etc/dcc/map.txt
+L /var/lib/dcc/whiteclnt - - - - /etc/dcc/whiteclnt
+L /var/lib/dcc/whitecommon - - - - /etc/dcc/whitecommon
+L /var/lib/dcc/whitelist - - - - /etc/dcc/whitelist
+f /var/lib/dcc/map
+EOF
+
+setterm --foreground blue
+echo "# Setting up approved users and groups..."
+setterm --foreground default
+
+cat >/usr/lib/sysusers.d/Debian-snmp.conf <<'EOF'
+u Debian-snmp -
+EOF
+
+cat >/usr/lib/sysusers.d/bind.conf <<'EOF'
+u bind -
+EOF
+
+cat >/usr/lib/sysusers.d/clamav.conf <<'EOF'
+u clamav -
+EOF
+
+cat >/usr/lib/sysusers.d/debian-spamd.conf <<'EOF'
+u debian-spamd -
+EOF
+
+cat >/usr/lib/sysusers.d/greylist.conf <<'EOF'
+u greylist -
+EOF
+
+cat >/usr/lib/sysusers.d/ntpsec.conf <<'EOF'
+u ntpsec -
+EOF
+
+cat >/usr/lib/sysusers.d/ssh.conf <<'EOF'
+g _ssh -
+EOF
+
+# /* systemd-timesyncd is removed during package install and extra user causes bootc lint error */
+userdel systemd-timesync

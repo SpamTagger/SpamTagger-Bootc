@@ -1,0 +1,190 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "########################"
+echo "# Installing packages..."
+echo "########################"
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Enabling Non-Free Repository..."
+setterm --foreground default
+
+sed -i 's/Components: main/Components: main non-free non-free-firmware/' /etc/apt/sources.list.d/debian.sources
+
+setterm --foreground blue
+echo "# Installing dependencies..."
+setterm --foreground default
+
+apt-get update
+apt install --assume-yes --no-install-recommends --no-install-suggests \
+  apt-transport-https \
+  apt-utils \
+  bind9 \
+  bogofilter \
+  bzip2 \
+  ca-certificates \
+  clamav-daemon \
+  console-data \
+  cpanminus \
+  cron \
+  curl \
+  debconf \
+  distrobox \
+  dnsutils \
+  fail2ban \
+  fangfrisch \
+  fdisk \
+  file \
+  firmware-amd-graphics \
+  firmware-intel-graphics \
+  firmware-linux \
+  firmware-linux-free \
+  firmware-linux-nonfree \
+  firmware-nvidia-graphics \
+  git \
+  gpg \
+  gzip \
+  greylistd \
+  ipset \
+  iputils-ping \
+  kbd \
+  libarchive-any-perl \
+  libarchive-zip-perl \
+  libauthen-radius-perl \
+  libbsd-resource-perl \
+  libbusiness-isbn-perl \
+  libbz2-dev \
+  libconfig-yaml-perl \
+  libconvert-binhex-perl \
+  libconvert-tnef-perl \
+  libdata-dump-perl \
+  libdata-validate-domain-perl \
+  libdata-validate-ip-perl \
+  libdate-calc-perl \
+  libdatetime-perl \
+  libdbd-sqlite3-perl \
+  libdbi-perl \
+  libdevel-size-perl \
+  libdigest-hmac-perl \
+  libencode-detect-perl \
+  libevent-2.1-7 \
+  libextutils-cbuilder-perl \
+  libffi-dev \
+  libfile-touch-perl \
+  libfilesys-df-perl \
+  libgcrypt20-dev \
+  libgdbm-dev \
+  libgeo-ip-perl \
+  libgeoip2-perl \
+  libgnutls-dane0 \
+  libgnutls-openssl27 \
+  libgnutls28-dev \
+  libgsasl-dev \
+  libhtml-parser-perl \
+  libhtml-tagset-perl \
+  libinline-c-perl \
+  libio-compress-perl \
+  libio-interactive-perl \
+  libio-socket-inet6-perl \
+  libio-socket-ssl-perl \
+  libio-string-perl \
+  libio-stringy-perl \
+  libipc-run-perl \
+  libipc-run3-perl \
+  libipc-shareable-perl \
+  libjson-xs-perl \
+  libldap-dev \
+  libldap-common \
+  liblzma-dev \
+  libmail-dkim-perl \
+  libmail-imapclient-perl \
+  libmail-pop3client-perl \
+  libmail-spf-perl \
+  libmail-srs-perl \
+  libmailtools-perl \
+  libmath-int128-perl \
+  libmldbm-perl \
+  libmldbm-sync-perl \
+  libmodule-build-perl \
+  libncurses-dev \
+  libnet-cidr-lite-perl \
+  libnet-cidr-perl \
+  libnet-dns-perl \
+  libnet-dns-resolver-programmable-perl \
+  libnet-http-perl \
+  libnet-imap-simple-perl \
+  libnet-imap-simple-ssl-perl \
+  libnet-ip-perl \
+  libnet-ldap-perl \
+  libnet-patricia-perl \
+  libnet-smtpauth-perl \
+  libnet-snmp-perl \
+  libnetaddr-ip-perl \
+  libole-storage-lite-perl \
+  libopendmarc-dev \
+  libopendmarc2 \
+  libpam0g-dev \
+  libparse-recdescent-perl \
+  libperl-dev \
+  libpcre2-dev \
+  libperl-version-perl \
+  libproc-processtable-perl \
+  libreadline-dev \
+  libredis-perl \
+  librrdtool-oo-perl \
+  libsendmail-pmilter-perl \
+  libsnmp-dev \
+  libsnmp-perl \
+  libspf2-dev \
+  libspf2-2 \
+  libssl3 \
+  libstring-approx-perl \
+  libsys-hostname-long-perl \
+  libsys-sigaction-perl \
+  libsqlite3-dev \
+  libterm-readkey-perl \
+  libtest-manifest-perl \
+  libtest-pod-coverage-perl \
+  libtest-pod-perl \
+  libtext-trim-perl \
+  liburi-perl \
+  links \
+  lsb-release \
+  lzma \
+  net-tools \
+  openssh-client \
+  openssh-server \
+  open-vm-tools \
+  pwgen \
+  snmpd \
+  zstd \
+  $(
+    cat /run/build_files/variant-packages \
+      /run/build_files/version-packages |
+      tr '\n' ' '
+  )
+rm -rf /var/lib/apt/lists
+mkdir /var/lib/apt/lists
+apt-get clean -y
+
+setterm --foreground blue
+echo "# Installing Exim..."
+setterm --foreground default
+
+dpkg -i /run/exim-builder/st-exim-*
+
+setterm --foreground blue
+echo "# Installing DCC from OBS..."
+setterm --foreground default
+
+cd /tmp/
+OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/Debian_13/$ARCH/"
+VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc_[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
+curl -L $OBS_PATH/$VERSION -o $VERSION 2>/dev/null
+dpkg -i $VERSION
+rm $VERSION

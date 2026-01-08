@@ -1,0 +1,72 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "##################"
+echo "# Building Exim..."
+echo "##################"
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Installing dependencies..."
+setterm --foreground default
+
+apt update -y
+apt install --assume-yes --no-install-recommends --no-install-suggests \
+  $(cat /run/build_files/exim-builder-deps | tr '\n' ' ')
+
+setterm --foreground blue
+echo "# Cloning Exim repository..."
+setterm --foreground default
+
+git clone https://code.exim.org/exim/exim.git --depth 1 /exim
+
+setterm --foreground blue
+echo "# Fetching and checking out tagged version (exim-$EXIM_VERSION)..."
+setterm --foreground default
+
+cd /exim
+git fetch --tags
+git checkout exim-${EXIM_VERSION}
+
+setterm --foreground blue
+echo "# Adding spamtagger user..."
+setterm --foreground default
+
+useradd spamtagger --system --create-home --user-group --home-dir /var/spamtagger --shell /usr/sbin/nologin
+cd src
+
+setterm --foreground blue
+echo "# Importing modified build options and building..."
+setterm --foreground default
+
+mkdir Local
+cp /run/build_files/exim-files/EDITME Local/Makefile
+ldconfig
+EXIM_RELEASE_VERSION=${EXIM_VERSION} make -j$(lscpu | grep '^CPU(s):' | awk '{ print $2 }')
+make install
+
+setterm --foreground blue
+echo "# Copying built files to DEB directory and building DEB..."
+setterm --foreground default
+
+mkdir /st-exim
+cp -a /usr/exim /st-exim/usr/
+cp -r /run/build_files/exim-files/ /st-exim/DEBIAN
+sed -i 's/__INSTVER__/'$EXIM_VERSION'/' /st-exim/DEBIAN/control
+sed -i 's/__INSTSIZE__/'$(du -sk /st-exim | cut -f1)'/' /st-exim/DEBIAN/control
+sed -i 's/__ARCH__/'$ARCH'/' /st-exim/DEBIAN/control
+
+find /st-exim -type f
+cd /
+dpkg-deb -b -Z gzip /st-exim /st-exim-${EXIM_VERSION}_${ARCH}.deb
+/*
+lintian /st-exim-${EXIM_VERSION}_${ARCH}.deb
+*/
+
+setterm --foreground blue
+echo "# Successfully built package at /st-exim-${EXIM_VERSION}_${ARCH}.deb..."
+setterm --foreground default
