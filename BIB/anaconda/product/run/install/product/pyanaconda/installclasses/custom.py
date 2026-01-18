@@ -5,9 +5,9 @@ from pyanaconda import nm
 
 
 class CustomBaseInstallClass(BaseInstallClass):
-    name = "SpamTagger Plus"
+    name = "SpamTagger"
     sortPriority = 30000
-    if not productName.startswith("SpamTagger Plus"):
+    if not productName.startswith("SpamTagger"):
         hidden = True
     defaultFS = "xfs"
     bootloaderTimeoutDefault = 5

@@ -665,7 +665,7 @@ build-iso $variant="" $version="" $registry="": start-machine
     if [ "$variant" == 'spamtagger' ]; then
       sed -i "s/<VARIANT>/SpamTagger/" .buildstamp
     else
-      sed -i "s/<VARIANT>/SpamTagger Plus/" .buildstamp
+      sed -i "s/<VARIANT>/SpamTagger Core/" .buildstamp
     fi
     sed -i "s/<VERSION>/$version/" .buildstamp
     sed -i "s/<TAG>/$TIMESTAMP/" .buildstamp

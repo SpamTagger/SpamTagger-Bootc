@@ -36,6 +36,7 @@ setterm --foreground default
 rm -rf \
   /etc/ssh/ssh_*_key* \
   /opt \
+  /run \
   /var/backups \
   /var/cache/apt/archives \
   /var/lib/bind \
@@ -78,7 +79,8 @@ rm -rf \
   /var/spool/cron \
   /var/spool/mail \
   /var/spool/rsyslog \
-  /var/www
+  /var/www \
+  || true # If prohibited files fail to be deleted, the linter will find them
 
 setterm --foreground blue
 echo "# Adding approved /var directories..."

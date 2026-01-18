@@ -1,6 +1,6 @@
 ---
 name: Build SpamTagger
-run-name: Build SpamTagger and SpamTagger Plus by @${{ github.actor }}
+run-name: Build SpamTagger and SpamTagger Core by @${{ github.actor }}
 on:
   workflow_dispatch:
   schedule:
@@ -28,7 +28,7 @@ jobs:
         include:
           - variant: spamtagger
             version: 13
-          - variant: spamtagger-plus
+          - variant: spamtagger-core
             version: 13
     container:
       image: "ghcr.io/ublue-os/devcontainer:latest"

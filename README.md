@@ -1,14 +1,14 @@
 # SpamTagger-Bootc
 
-This repository is used to generate OCI images and derived VMs and ISOs for [SpamTagger Plus](https://github.com/SpamTagger/SpamTagger-Plus) appliances (with future support for [SpamTagger](https://github.com/SpamTagger/SpamTagger) already in place) based on CentOS Stream 10.
+This repository is used to generate OCI images and derived VMs and ISOs for [SpamTagger](https://github.com/SpamTagger/SpamTagger) appliances (with future support for [SpamTagger Core](https://github.com/SpamTagger/SpamTagger) already in place) based on Debian Stable (13).
 
 ## 🚧 Under Construction 🚧
 
-This tool currently builds generic CentOS images with fairly minimal modification and does not yet produce a usable SpamTagger Plus configuration. Regardless of the progress made in this repository, note that the SpamTagger Plus application is still under construction as well. Any images build from this repository will not provide functional email filtering until both this repository and that one have a stable release.
+This tool currently builds from generic Debian Bootc image with fairly minimal modification and does not yet produce a usable SpamTagger configuration. Regardless of the progress made in this repository, note that the SpamTagger application is still under construction as well. Any images build from this repository will not provide functional email filtering until both this repository and that one have a stable release.
 
 ## 🏝️ Background 🏝️
 
-This project pulls significantly from the [Cayo](https://github.com/ublue-os/cayo) project, which itself is a variant of [Universal Blue (UBlue)](https://github.com/ublue-os) which targets general purpose server images for container and storage workloads based on [CentOS](https://gitlab.com/redhat/centos-stream/containers/bootc/-/tree/c10s). SpamTagger-Bootc removes many of the tools built in to Cayo to suit only the functions necessary for email filtering.
+This project pulls significantly from the [Cayo](https://github.com/ublue-os/cayo) project, which itself was a variant of [Universal Blue (UBlue)](https://github.com/ublue-os) which targets general purpose server images for container and storage workloads based on [CentOS](https://gitlab.com/redhat/centos-stream/containers/bootc/-/tree/c10s). Since it's inception, this repository has change back to using a Debian base, provided by the [frostyard](/frostyard/debian-bootc-core) as the toolchain has matured since this is the base that is familiar to MailCleaner users and requires the fewest changes to complete an upgrade. SpamTagger-Bootc aims to produce minimal images with only the essential tools needed for email filtering and administration.
 
 ## 🥅 Goals 🥅
 
@@ -18,8 +18,8 @@ SpamTagger bootc images are meant to be suitable for appliance applications in a
 - `bootc` also ensures that all deployments of the same version have identical operating system and application code. This means that bugs should be replicable across each deployment rather than being subject to an unknown number of confounding factors.
 - `bootc` also provides auto-updates to new versions of the application and operating system which are atomic and which replace the entire root filesystem image. This ensures that all updates will be installed completely and successfully.
 - In the event that the system successfully installs an update which is broken, `bootc` also provides automatic rollbacks to the last working version if the system fails to boot.
-- `bootc` also enables for rolling back to any other previous release which still exists in the registry as well as checking out different tagged versions to halt updates or put the system into an alternate update track (say `spamtagger-plus-10` instead of `spamtagger-plus` to prevent automatically updating to `spamtagger-plus-11` when the first CentOS 11 builds become available).
-- CentOS provides a solid foundations because it is bound by [RedHat's compatibility guarantees](https://access.redhat.com/articles/rhel10-abi-compatibility), it provides a [long life-cycle](https://access.redhat.com/support/policy/updates/errata#Life_Cycle_Dates), and experiences relatively minimal churn throughout each release.
+- `bootc` also enables for rolling back to any other previous release which still exists in the registry as well as checking out different tagged versions to halt updates or put the system into an alternate update track (say `spamtagger-core-13` instead of `spamtagger-core` to prevent automatically updating to `spamtagger-core-13` when the first Debian 14 builds become available).
+- Debian provides an extremely stable foundations which is familiar to existing MailCleaner users and contributors. It is developed without corporate oversight and has proven to be immune from negative influence or decay for decades. Debian experiences minimal churn during it's release cycle and packages are tested extremely thoroughly before they are able to enter Stable.
 - The minimum necessary tools for a functional mail filtering appliance will be included. The images should remain quite minimal in size (probably just over 2GB) and will not be suitable as a general-purpose server.
 - Administrative changes on the OS level will be strongly discouraged, aside from basics like network configuration.
 - Additional featurs which are generally desirable for other members of the community should be made available to be integrated back into the projects (as is a requirement of the [license](https://github.com/SpamTagger-Bootc/blob/main/LICENSE.md)). Other features which are more niche can be made available through system extensions via `systemd sysext` and Podman's [quadlets](https://github.com/containers/appstore).
@@ -47,14 +47,14 @@ yq -r "explode(.)|.images" images.yaml
 
 SpamTagger will primarily build two images:
 
-- one for [SpamTagger Plus](https://github.com/SpamTagger/SpamTagger-Plus), the direct successor to MailCleaner which retains a WebUI and other more complex features.
-- and eventually one for [SpamTagger](https://github.com/SpamTagger/SpamTagger), the simplified, commandline-only hard fork
+- one for [SpamTagger](https://github.com/SpamTagger/SpamTagger), the direct successor to MailCleaner which retains a WebUI and other more complex features.
+- and eventually one for [SpamTagger Core](https://github.com/SpamTagger/SpamTagger-Core), the simplified, commandline-only hard fork
 
-Each of those is tagged at runtime with the version of CentOS which it is based upon as well as a timestamp. This allows users to track a different life-cycle:
+Each of those is tagged at runtime with the version of Debian which it is based upon as well as a timestamp. This allows users to track a different life-cycle:
 
-- tracking `spamtagger-plus` will ensure that you always update to the latest, including across OS upgrades.
-- tracking `spamtagger-plus-10` will ensure that you have the latest version built on CentOS 10, but not any future releases tagged as `spamtagger-plus-11`.
-- tracking `spamtagger-plus-20250801` will ensure that you never update past that specific release.
+- tracking `spamtagger` will ensure that you always update to the latest, including across OS upgrades.
+- tracking `spamtagger-13` will ensure that you have the latest version built on Debian 13, but not any future releases tagged as `spamtagger-14`.
+- tracking `spamtagger-13-20250801` will ensure that you never update past that specific release.
 
 In the future, additional tags for testing experimental feature branches.
 
@@ -87,5 +87,5 @@ You will primarily need:
 ## See Also
 
 - [SpamTagger](https://github.com/SpamTagger/SpamTagger) application repository
-- [SpmTagger Plus](https://github.com/SpamTagger-Plus) application repository
+- [SpmTagger Core](https://github.com/SpamTagger-Core) application repository
 - Other [SpamTagger](https://github.com/SpamTagger) projects

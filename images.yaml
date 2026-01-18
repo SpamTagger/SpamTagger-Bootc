@@ -10,9 +10,9 @@ spamtagger-base: &spamtagger-base
   cppFlags: ["SPAMTAGGER"]
   product: spamtagger
   upstream: centos
-spamtagger-plus-base: &spamtagger-plus-base
-  cppFlags: ["PLUS"]
-  product: spamtagger-plus
+spamtagger-core-base: &spamtagger-core-base
+  cppFlags: ["CORE"]
+  product: spamtagger-core
   upstream: centos
 spamtagger-13: &spamtagger-13
   <<: *spamtagger-base
@@ -21,8 +21,8 @@ spamtagger-13: &spamtagger-13
   version: 13
   exim: 4.99
   default: false
-spamtagger-plus-13: &spamtagger-plus-13
-  <<: *spamtagger-plus-base
+spamtagger-core-13: &spamtagger-core-13
+  <<: *spamtagger-core-base
   # TODO: Implement a Renovate Regex
   source: ghcr.io/frostyard/debian-bootc-core:latest
   version: 13
@@ -30,7 +30,7 @@ spamtagger-plus-13: &spamtagger-plus-13
   default: true
 
 defaults:
-  variant: spamtagger-plus
+  variant: spamtagger
   version: 13
 
 images:
@@ -38,9 +38,9 @@ images:
     !!merge <<: 
       - *spamtagger-13
       - *spamtagger-bootc-base
-  spamtagger-bootc-spamtagger-plus-13:
+  spamtagger-bootc-spamtagger-core-13:
     !!merge <<:
-      - *spamtagger-plus-13
+      - *spamtagger-core-13
       - *spamtagger-bootc-base
   rechunker:
     # TODO: Add Renovate Regex configuration

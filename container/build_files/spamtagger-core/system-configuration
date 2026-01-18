@@ -1,0 +1,12 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "##################################"
+echo "# SpamTagger Configuration..."
+echo "##################################"
+setterm --foreground default
+
