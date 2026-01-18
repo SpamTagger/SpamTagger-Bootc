@@ -1,4 +1,4 @@
-# SpamTagger-Bootc
+# <img src="https://raw.githubusercontent.com/SpamTagger/SpamTagger-Bootc/refs/heads/main/spamtagger-bootc.svg" alt="SpamTagger Bootc Logo" style="height:2em; vertical-align:middle;"> SpamTagger Bootc
 
 This repository is used to generate OCI images and derived VMs and ISOs for [SpamTagger](https://github.com/SpamTagger/SpamTagger) appliances (with future support for [SpamTagger Core](https://github.com/SpamTagger/SpamTagger) already in place) based on Debian Stable (13).
 
