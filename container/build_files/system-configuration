@@ -11,3 +11,6 @@ echo "#######################"
 setterm --foreground default
 
 echo -n 'spamtagger' > /etc/hostname
+
+echo 'DPkg::Progress-Fancy "0";' > /etc/apt/apt.conf.d/99no-eipp
+
