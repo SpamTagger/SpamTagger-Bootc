@@ -112,12 +112,6 @@ RUN --mount=type=cache,dst=/var/cache \
   bash <<'RUNEOF'
 /* Remove unnecessary files/repositories/etc. */
 #include "build_files/cleanup"
-/* Remove packages and files not needed for specific version */
-#ifdef CORE
-#include "build_files/spamtagger-core/cleanup"
-#else
-#include "build_files/spamtagger/cleanup"
-#endif /* CORE */
 RUNEOF
 
 /* Copy in cosign.pub key
@@ -127,6 +121,11 @@ COPY build_files/cosign.pub /run/build_files/cosign.pub
 RUN bash <<'RUNEOF'
 #include "build_files/finalize"
 RUNEOF
+
+/* Remove APT logs
+For some reason removing them as part of the last step doesn't work, but it does work as an additional RUN command???
+*/
+RUN ["rm", "-rf", "/var/log/apt"]
 
 /* Test BootC image */
 RUN ["bootc", "container", "lint", "--fatal-warnings", "--no-truncate"]
