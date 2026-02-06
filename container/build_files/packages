@@ -52,6 +52,7 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   greylistd \
   ipset \
   iputils-ping \
+  jq \
   kbd \
   libarchive-any-perl \
   libarchive-zip-perl \

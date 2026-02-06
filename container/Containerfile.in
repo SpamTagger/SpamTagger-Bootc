@@ -114,10 +114,10 @@ RUN --mount=type=cache,dst=/var/cache \
 #include "build_files/cleanup"
 RUNEOF
 
-/* Copy in cosign.pub key
-COPY build_files/cosign.pub /run/build_files/cosign.pub
+/* Copy in cosign.pub key */
+COPY cosign.pub /run/cosign.pub
 
-/* Run Bash recipe to finalize image
+/* Run Bash recipe to finalize image */
 RUN bash <<'RUNEOF'
 #include "build_files/finalize"
 RUNEOF
