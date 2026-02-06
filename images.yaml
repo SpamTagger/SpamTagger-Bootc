@@ -7,13 +7,15 @@ spamtagger-bootc-base: &spamtagger-bootc-base
   registry: ghcr.io
   repo: spamtagger-bootc
 spamtagger-base: &spamtagger-base
+  <<: *spamtagger-bootc-base
   cppFlags: ["SPAMTAGGER"]
   product: spamtagger
-  upstream: centos
+  upstream: debian
 spamtagger-core-base: &spamtagger-core-base
+  <<: *spamtagger-bootc-base
   cppFlags: ["CORE"]
   product: spamtagger-core
-  upstream: centos
+  upstream: debian
 spamtagger-13: &spamtagger-13
   <<: *spamtagger-base
   # TODO: Implement a Renovate Regex
