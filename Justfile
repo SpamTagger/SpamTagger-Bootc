@@ -251,7 +251,7 @@ build-container $variant="" $version="":
             flags+=("${f#*flag=}")
         fi
     done
-    {{ require('cpp') }} -E -traditional container/Containerfile.in ${flags[@]} > {{ builddir / '$variant-$version/Containerfile' }}
+    {{ require('cpp') }} -E -traditional -P container/Containerfile.in ${flags[@]} > {{ builddir / '$variant-$version/Containerfile' }}
     labels="LABEL"
     for l in "${LABELS[@]}"; do
         if [[ "$l" != "--label" ]]; then

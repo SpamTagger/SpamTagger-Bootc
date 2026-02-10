@@ -19,14 +19,14 @@ spamtagger-core-base: &spamtagger-core-base
 spamtagger-13: &spamtagger-13
   <<: *spamtagger-base
   # TODO: Implement a Renovate Regex
-  source: ghcr.io/frostyard/debian-bootc-core:latest
+  source: ghcr.io/spamtagger/debian-bootc-core:latest
   version: 13
   exim: 4.99
   default: false
 spamtagger-core-13: &spamtagger-core-13
   <<: *spamtagger-core-base
   # TODO: Implement a Renovate Regex
-  source: ghcr.io/frostyard/debian-bootc-core:latest
+  source: ghcr.io/spamtagger/debian-bootc-core:latest
   version: 13
   exim: 4.99
   default: true

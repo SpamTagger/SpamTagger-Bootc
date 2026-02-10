@@ -1,0 +1,32 @@
+# /*
+#shellcheck disable=SC2174,SC2114
+# */
+
+set ${CI:+-x} -euo pipefail
+
+setterm --foreground green
+echo "##################"
+echo "# Finalizing Image"
+echo "##################"
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Setting up signing key"
+setterm --foreground default
+
+cat <<<"$(jq '.transports.docker |=. + {
+   "ghcr.io/spamtagger/spamtagger-bootc": [
+    {
+        "type": "sigstoreSigned",
+        "keyPaths": [
+            "/etc/pki/containers/cosign.pub"
+        ],
+        "signedIdentity": {
+            "type": "matchRepository"
+        }
+    }
+]}' <"/etc/containers/policy.json")" >"/tmp/policy.json"
+
+mv /tmp/policy.json /etc/containers/policy.json
+mkdir -p /etc/pki/containers
+mv /run/cosign.pub /etc/pki/containers/cosign.pub
