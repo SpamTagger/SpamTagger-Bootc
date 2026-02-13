@@ -1,38 +1,26 @@
 # <img src="https://raw.githubusercontent.com/SpamTagger/SpamTagger-Bootc/refs/heads/main/spamtagger-bootc.svg" alt="SpamTagger Bootc Logo" style="height:2em; vertical-align:middle;"> SpamTagger Bootc
 
-This repository is used to generate OCI images and derived VMs and ISOs for [SpamTagger](https://github.com/SpamTagger/SpamTagger) appliances (with future support for [SpamTagger Core](https://github.com/SpamTagger/SpamTagger) already in place) based on Debian Stable (13).
+![SpamTagger Bootc Image Stack](https://raw.githubusercontent.com/SpamTagger/assets/5c7d152bda6e496a3cf111027dffba5798ba3915/bootc-stack.svg "This tool is used to generate Bootc-compatible, Debian-based, OCI images with SpamTagger tools pre-installed. This allows for automated building of SpamTagger appliance images in a variety of formats.")
 
 ## 🚧 Under Construction 🚧
 
-This tool currently builds from generic Debian Bootc image with fairly minimal modification and does not yet produce a usable SpamTagger configuration. Regardless of the progress made in this repository, note that the SpamTagger application is still under construction as well. Any images build from this repository will not provide functional email filtering until both this repository and that one have a stable release.
+This tool currently builds from a generic Debian Bootc image with few modification and does not yet produce a usable SpamTagger configuration. Regardless of the progress made in this repository, note that the [SpamTagger](https://github.com/SpamTagger/SpamTagger) application is still under construction as well. Any images built from this repository will not provide functional email filtering until both this repository and that one have a stable release.
 
 ## 🏝️ Background 🏝️
 
-This project pulls significantly from the [Cayo](https://github.com/ublue-os/cayo) project, which itself was a variant of [Universal Blue (UBlue)](https://github.com/ublue-os) which targets general purpose server images for container and storage workloads based on [CentOS](https://gitlab.com/redhat/centos-stream/containers/bootc/-/tree/c10s). Since it's inception, this repository has change back to using a Debian base, provided by the [frostyard](/frostyard/debian-bootc-core) as the toolchain has matured since this is the base that is familiar to MailCleaner users and requires the fewest changes to complete an upgrade. SpamTagger-Bootc aims to produce minimal images with only the essential tools needed for email filtering and administration.
+This project pulls significantly from various projects under the [Universal Blue (UBlue)](https://github.com/ublue-os) umbrella, as well as other projects inspired by it. SpamTagger-Bootc aims to produce minimal images with only the essential tools needed for email filtering and administration.
 
-## 🥅 Goals 🥅
+SpamTagger inherits from MailCleaner, which has historically been built of Debian throught its whole life. In order to remain familiar to users and to require the fewest possible changes, an updated Debian base is maintained. There is currently no official Debian Bootc image, so we are currently maintaining [our own fork](https://github.com/SpamTagger/debian-boot-core) of a community-built image.
 
-SpamTagger bootc images are meant to be suitable for appliance applications in a wide variety of contexts. To reach this goal the following techniques are employed:
+BootC is a new and exciting technology which allows for creating read-only root filesystem images which can be deployed and atomically updated in a wide variety of contexts. It should ensure that SpamTagger appliances remain consistent, secure, up-to-date, and immune from degradation over time due to [hysteresis](https://en.wikipedia.org/wiki/Hysteresis).
 
-- `bootc` images provide an "immutable" root filesystem so that OS and application code cannot be modified or broken by the user or vulnerabilities.
-- `bootc` also ensures that all deployments of the same version have identical operating system and application code. This means that bugs should be replicable across each deployment rather than being subject to an unknown number of confounding factors.
-- `bootc` also provides auto-updates to new versions of the application and operating system which are atomic and which replace the entire root filesystem image. This ensures that all updates will be installed completely and successfully.
-- In the event that the system successfully installs an update which is broken, `bootc` also provides automatic rollbacks to the last working version if the system fails to boot.
-- `bootc` also enables for rolling back to any other previous release which still exists in the registry as well as checking out different tagged versions to halt updates or put the system into an alternate update track (say `spamtagger-core-13` instead of `spamtagger-core` to prevent automatically updating to `spamtagger-core-13` when the first Debian 14 builds become available).
-- Debian provides an extremely stable foundations which is familiar to existing MailCleaner users and contributors. It is developed without corporate oversight and has proven to be immune from negative influence or decay for decades. Debian experiences minimal churn during it's release cycle and packages are tested extremely thoroughly before they are able to enter Stable.
-- The minimum necessary tools for a functional mail filtering appliance will be included. The images should remain quite minimal in size (probably just over 2GB) and will not be suitable as a general-purpose server.
-- Administrative changes on the OS level will be strongly discouraged, aside from basics like network configuration.
-- Additional featurs which are generally desirable for other members of the community should be made available to be integrated back into the projects (as is a requirement of the [license](https://github.com/SpamTagger-Bootc/blob/main/LICENSE.md)). Other features which are more niche can be made available through system extensions via `systemd sysext` and Podman's [quadlets](https://github.com/containers/appstore).
-- Installing additional applications and services outside of the OS and application sandbox via tools like Docker, Distrobox, Brew and Pip is still possible.
-- The CI/CD tools in this repository provide automated tools for building container images which can be pulled directly into a containerized environment, switched out from [an existing bootc installation](https://github.com/bootc-dev/bootc/blob/main/docs/src/man/bootc-switch.md) or [self-installed to an existing disk/filesystem](https://bootc-dev.github.io/bootc//bootc-install.html#executing-bootc-install) on a machine with Podman. These images will also be built into VM images supported by most major hypervisors (likely to be the primary method), as well as installable ISOs, and other formats.
-- It should also be possible to run images within a development environment using tools like
-[`distrobox`](https://distrobox.it) where the root filesystem becomes writable and tools like `git` and text editors can be easily installed.
+SpamTagger is deployed within the read-only layer of these images so that the application code cannot be broken accidentally. Facilities remain in place for user modifications within a writable directory and additional packages and features can be added via contributions to the project, or through `system-sysext` extensons, containers, `brew` packages, `pip` or other package managers.
 
 ## 🧑‍🔧 Technical Details 🧑‍🔧
 
-This repository inherits many of the good practices started out by UBlue and Cayo and seeks to continue and extend those where possible. Included in this is a focus on keeping the tooling open, easy to follow, functional in a local development environment, and automated using GitHub workflows.
+The rationale for the adopting of BootC was discussed in [this thread](https://github.com/orgs/SpamTagger/discussions/3). This projects aims to keeping the tooling open, easy to follow, functional in a local development environment, and automated using GitHub workflows.
 
-SpamTagger images:
+To understand how the tools work SpamTagger images:
 
 1. are defined via `images.yaml` with key "static" inputs required for a build (some tags and labels are generated or inspected).
 2. use `just` recipies to manage the build related functions, providing the same local build commands as are used in CI.
