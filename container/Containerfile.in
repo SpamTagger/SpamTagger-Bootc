@@ -1,39 +1,4 @@
 /* 
-BUILD EXIM
-
-First stage image used to build custom Exim package with our extra features not
-otherwise available in Debian's version.
-*/
-
-/* Dynamically insert base image from 'source' in images.yml*/
-FROM debian:stable as exim-builder
-
-ARG TERM=xterm 
-ARG DEBIAN_FRONTEND=noninteractive
-#ifdef CI_SETX
-ARG CI=1
-#endif /* CI_SETX */
-
-/* EXIM_VERSION to build; loaded from images.yml */
-ARG EXIM_VERSION=EXIM_VERSION_SUB
-/* Debian-friendly architecture shortname */
-ARG ARCH=ARCH_SUB
-
-/* Copy in file which contains the dependency list */
-COPY build_files/exim-builder-deps /run/build_files/exim-builder-deps
-/* Copy in directory which contains the Debian packaging metadata*/
-COPY build_files/exim-files /run/build_files/exim-files
-
-/* Run Bash recipe for Exim build */
-RUN --mount=type=cache,dst=/var/cache \
-  --mount=type=tmpfs,dst=/var/log \
-  --mount=type=tmpfs,dst=/var/tmp \
-  --mount=type=tmpfs,dst=/tmp \
-  bash <<'RUNEOF'
-#include "build_files/build-exim"
-RUNEOF
-
-/* 
 BUILD SPAMTAGGER BASE IMAGE
 
 Fourth stage builds the SpamTagger (Core) image as a standard (non-BootC) container.
@@ -80,7 +45,6 @@ RUN --mount=type=cache,dst=/var/cache \
   --mount=type=tmpfs,dst=/var/log \
   --mount=type=tmpfs,dst=/var/tmp \
   --mount=type=tmpfs,dst=/tmp \
-  --mount=type=bind,from=exim-builder,source=/,dst=/run/exim-builder \
   bash <<'RUNEOF'
 #include "build_files/packages"
 RUNEOF

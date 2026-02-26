@@ -172,20 +172,3 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
 rm -rf /var/lib/apt/lists
 mkdir /var/lib/apt/lists
 apt-get clean -y
-
-setterm --foreground blue
-echo "# Installing Exim..."
-setterm --foreground default
-
-dpkg -i /run/exim-builder/st-exim-*
-
-setterm --foreground blue
-echo "# Installing DCC from OBS..."
-setterm --foreground default
-
-cd /tmp/
-OBS_PATH="https://download.opensuse.org/repositories/home:/voegelas/Debian_13/$ARCH/"
-VERSION=$(curl $OBS_PATH 2>/dev/null | grep -P 'dcc_[0-9]' | grep -v mirrorlist | sed 's/.*href="\.\/\([^"]*\)".*/\1/')
-curl -L $OBS_PATH/$VERSION -o $VERSION 2>/dev/null
-dpkg -i $VERSION
-rm $VERSION
