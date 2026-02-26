@@ -35,11 +35,6 @@ ARG CI=1
 /* Don't use SELinux features of OSTree */
 ENV OSTREE_SELINUX_ENABLE=0
 
-/* Copy in file which contains the package list for this variant */
-COPY build_files/VARIANT_SUB/packages /run/build_files/variant-packages
-/* Copy in file which contains the package list for the specific version of this variant */
-COPY build_files/VARIANT_SUB/VERSION_SUB/packages /run/build_files/version-packages
-
 /* Run Bash recipe for package installations */
 RUN --mount=type=cache,dst=/var/cache \
   --mount=type=tmpfs,dst=/var/log \
@@ -62,11 +57,6 @@ RUN --mount=type=cache,dst=/var/cache \
 #include "build_files/spamtagger/system-configuration"
 #endif /* CORE */
 RUNEOF
-
-/* Copy in file which contains the package list for this variant */
-COPY build_files/VARIANT_SUB/cleanup-packages /run/build_files/variant-cleanup
-/* Copy in file which contains the package list for the specific version of this variant */
-COPY build_files/VARIANT_SUB/VERSION_SUB/cleanup-packages /run/build_files/version-cleanup
 
 /* Run Bash recipe to clean up unnecessary files and packages */
 RUN --mount=type=cache,dst=/var/cache \

@@ -20,10 +20,6 @@ setterm --foreground blue
 echo "# Remove unneeded packages and APT archives..."
 setterm --foreground default
 
-REMOVE=$(cat /run/build_files/variant-cleanup /run/build_files/version-cleanup | tr '\n' ' ')
-if [[ ! "$REMOVE" == "" ]]; then
-  apt-get purge -y $REMOVE
-fi
 apt-get autoremove -y --purge
 apt-get clean -y
 rm -rf /var/lib/dpkg/info /var/lib/apt
