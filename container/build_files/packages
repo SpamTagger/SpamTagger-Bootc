@@ -21,10 +21,10 @@ echo "# Installing dependencies..."
 setterm --foreground default
 
 # /* 
-# This should just include OS packages, not any application packages.
 # All application packages should be installed in the bootstrap install script
 # for the relevant SpamTagger version.
-# Here we will also include some non-essential packages which will be useful or
+# Here we will include essential OS packages (duplicated in the bootstrap
+# install script) as well as some non-essential packages which will be useful or
 # necessary in a BootC context, but which can be installed more selectively in
 # a generic Debian installation */
 
@@ -54,9 +54,6 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   kbd \
   lsb-release \
   lzma \
-  net-tools \
-  openssh-client \
-  openssh-server \
   open-vm-tools \
   podman \
   zstd
