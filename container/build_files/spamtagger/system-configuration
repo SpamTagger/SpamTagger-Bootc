@@ -66,6 +66,14 @@ setterm --foreground default
 sed -i 's/root:[^:]*:/root:$y$j9T$kfLbiAeBa5PuQAZtTqBph1$ufRc85kbALH5Eg.IhtZcoyoDZ92SZfJmdX9p22Qg1D5:/' /etc/shadow
 
 setterm --foreground blue
+echo "# Configuring SpamTagger-only users..."
+setterm --foreground default
+
+cat >/usr/lib/sysusers.d/Debian-snmp.conf <<'EOF'
+u Debian-snmp -
+EOF
+
+setterm --foreground blue
 echo "# Creating empty configuration file..."
 setterm --foreground default
 
@@ -89,3 +97,15 @@ if [ ! -d /etc/anaconda/profile.d ]; then
   mkdir -p /etc/anaconda/profile.d
 fi
 cp /usr/spamtagger/install/anaconda/profile.d/spamtagger.conf /etc/anaconda/profile.d/
+
+setterm --foreground green
+echo "##################################"
+echo "# Running Debian Bootstrap Script..."
+echo "##################################"
+setterm --foreground default
+
+echo "# This is a child process which is designed to fail quickly and raise the problematic step using a 'x' instead of a '*' upon failure."
+if [[ ! -z $CI ]]; then
+  export CI=$CI
+fi
+/usr/spamtagger/debian-bootstrap/install.sh

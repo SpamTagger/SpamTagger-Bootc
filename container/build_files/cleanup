@@ -53,12 +53,16 @@ rm -rf \
   /var/lib/dpkg/statoverride \
   /var/lib/dpkg/triggers \
   /var/lib/dpkg/updates \
+  /var/lib/exim4 \
   /var/lib/extended_states \
+  /var/lib/ghostscript \
   /var/lib/git \
   /var/lib/greylistd \
   /var/lib/grub \
   /var/lib/fail2ban \
+  /var/lib/libxml-sax-perl \
   /var/lib/logrotate \
+  /var/lib/man-db \
   /var/lib/mirrors/partial \
   /var/lib/mysql \
   /var/lib/ntpsec \
@@ -69,10 +73,12 @@ rm -rf \
   /var/lib/sgml-base \
   /var/lib/ucf \
   /var/lib/vim \
+  /var/lib/xfonts \
   /var/lib/xml-core \
   /var/local \
   /var/mail \
   /var/spool/cron \
+  /var/spool/exim4 \
   /var/spool/mail \
   /var/spool/rsyslog \
   /var/www \
@@ -142,8 +148,8 @@ setterm --foreground blue
 echo "# Setting up approved users and groups..."
 setterm --foreground default
 
-cat >/usr/lib/sysusers.d/Debian-snmp.conf <<'EOF'
-u Debian-snmp -
+cat >/usr/lib/sysusers.d/Debian-exim.conf <<'EOF'
+u Debian-exim -
 EOF
 
 cat >/usr/lib/sysusers.d/bind.conf <<'EOF'
@@ -166,8 +172,16 @@ cat >/usr/lib/sysusers.d/ntpsec.conf <<'EOF'
 u ntpsec -
 EOF
 
+cat >/usr/lib/sysusers.d/spamtagger.conf <<'EOF'
+u spamtagger -
+EOF
+
 cat >/usr/lib/sysusers.d/ssh.conf <<'EOF'
 g _ssh -
+EOF
+
+cat >/usr/lib/sysusers.d/chrony.conf <<'EOF'
+u _chrony -
 EOF
 
 # /* systemd-timesyncd is removed during package install and extra user causes bootc lint error */
