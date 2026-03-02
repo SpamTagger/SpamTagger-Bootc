@@ -105,7 +105,4 @@ echo "##################################"
 setterm --foreground default
 
 echo "# This is a child process which is designed to fail quickly and raise the problematic step using a 'x' instead of a '*' upon failure."
-if [[ ! -z $CI ]]; then
-  export CI=$CI
-fi
-/usr/spamtagger/debian-bootstrap/install.sh
+CI=1 /usr/spamtagger/debian-bootstrap/install.sh

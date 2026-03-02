@@ -7,6 +7,7 @@ builddir := shell('mkdir -p $1 && echo $1', absolute_path(env('SPAMTAGGER_BUILD'
 image := "spamtagger-bootc"
 variant := env('SPAMTAGGER_VARIANT', shell('yq ".defaults.variant" images.yaml'))
 version := env('SPAMTAGGER_VERSION', shell('yq ".defaults.version" images.yaml'))
+selinux := path_exists('/sys/fs/selinux')
 
 # Source Images
 
@@ -434,7 +435,11 @@ build-disk $variant="" $version="" $registry="": start-machine
     {{ default-inputs }}
     : "${registry:=localhost}"
     {{ get-names }}
-    fq_name="$registry/$image_name:$image_tag"
+    if [[ "$registry" == 'localhost' ]]; then
+      fq_name="$image_name:$image_tag"
+    else
+      fq_name="$registry/$image_name:$image_tag"
+    fi
     set -eou pipefail
     # Create Build Dir
     mkdir -p {{ builddir / 'disks' }}
@@ -447,17 +452,14 @@ build-disk $variant="" $version="" $registry="": start-machine
     fi
  
     # Load image into rootful podman-machine
-    if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
-        if ! [ "$registry" == "localhost" ]; then
-            # If using localhost registry, try pulling and check again
-            {{ podman-remote}} pull $fq_name
-            if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
-                echo "{{ style('error') }}Error:{{ NORMAL }} Image \"$fq_name\" not in image-store" >&2
-                exit 1
-            fi
+    if ! sudo {{ podman }} image exists $fq_name; then
+        # If using localhost registry, we need to build
+        if  [ "$registry" == "localhost" ]; then
+            echo "NEED TO BUILD"
+            sudo just build $variant $version
+        # otherwise pull image from registry
         else
-            echo "{{ style('error') }}Error:{{ NORMAL }} Image \"$fq_name\" not in image-store" >&2
-            exit 1
+            sudo {{ podman }} pull $fq_name
         fi
     fi
     if ! {{ podman-remote }} image exists $fq_name; then
@@ -479,17 +481,19 @@ build-disk $variant="" $version="" $registry="": start-machine
         fallocate -l 20G "{{ builddir }}/disks/$variant-$version.img"
     fi
     # Build Disk Image
+    echo $fq_name
     sudo podman run \
         --rm --privileged --pid=host \
         -it \
-        -v /sys/fs/selinux:/sys/fs/selinux \
-        -v /etc/containers:/etc/containers:Z \
-        -v /var/lib/containers:/var/lib/containers:Z \
+        -v /etc/containers:/etc/containers{{ if selinux == 'true' { ':Z' } else { '' } }} \
+        -v /var/lib/containers:/var/lib/containers{{ if selinux == 'true' { ':Z' } else { '' } }} \
+        {{ if selinux == 'true' { '-v /sys/fs/selinux/:/sys/fs/selinux' } else { '' } }} \
+        {{ if selinux == 'true' { '--security-opt label=type:unconfined_t' } else { '' } }} \
         -v /dev:/dev \
         -e BOOTC_SETENFORCE0_FALLBACK=1 \
+        -e RUST_LOG=debug \
         -v "{{ builddir }}/disks:/data" \
-        --security-opt label=type:unconfined_t \
-        "$fq_name" bootc install to-disk --composefs-backend --via-loopback "/data/$variant-$version.img" --filesystem ext4 --target-imgref $registry/$image_name:$variant-$version --wipe --bootloader systemd
+        "$fq_name" bootc install to-disk --composefs-backend --via-loopback "/data/$variant-$version.img" --filesystem ext4 --target-imgref $registry/$image_name:$variant-$version --wipe --bootloader systemd --karg "splash"
 
 #    # Pull Bootc Image Builder
 #    {{ podman-remote }} pull --retry 3 {{ bootc-image-builder }}
