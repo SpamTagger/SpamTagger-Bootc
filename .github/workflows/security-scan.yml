@@ -1,0 +1,37 @@
+name: Container Security Scan
+
+on:
+  schedule:
+    - cron: "0 4 * * *"  # daily at 4am
+
+jobs:
+  debsecan-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull latest container
+        run: |
+          docker pull ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13
+
+      - name: Run debsecan
+        run: |
+          docker run --rm \
+            ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
+            bash -c "apt-get update && apt-get install -y debsecan
+          
+      - name: Parse debsecan output
+        id: parse
+        run: |
+          VULNS=$(docker run --rm \
+            ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
+            bash -c "debsecan --suite trixie --format detail --only-fixed" > vulns)
+          echo "vulns=$(cat vulns)" >> $GITHUB_OUTPUT
+          echo "count=$(cat vulns | wc -l) >> $GITHUB_OUTPUT
+
+      - name: Open GitHub Issue if vulnerabilities found
+        if: steps.parse.outputs.count != '0'
+        uses: peter-evans/create-issue@v4
+        with:
+          title: "Security vulnerabilities detected in spamtagger-bootc:spamtagger-13"
+          body: |
+            `debsecan` found ${{ steps.parse.outputs.count }} vulnerabilities in the container. Details:
+            ${{ steps.parse.outputs.vulns }}
