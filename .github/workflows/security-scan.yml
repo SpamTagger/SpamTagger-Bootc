@@ -17,8 +17,8 @@ jobs:
       - name: Install debsecan
         id: install
         run: |
-          docker run -t debsecan \
-            ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
+          docker run --name=debsecan \
+            -t ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
             bash -c "apt-get update && apt-get install -y debsecan"
           
       - name: Run and parse debsecan
