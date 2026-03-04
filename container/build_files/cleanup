@@ -29,7 +29,14 @@ setterm --foreground blue
 echo "# Remove unneeded files..."
 setterm --foreground default
 
+for apparmor in $(find /etc/apparmor.d/ -type f); do
+  if [[ ! $apparmor =~ "/etc/apparmor.d/*\.*" ]]; then
+    rm $apparmor
+  fi
+done
+
 rm -rf \
+  /etc/default/locale \
   /etc/ssh/ssh_*_key* \
   /opt \
   /run \
@@ -80,6 +87,7 @@ rm -rf \
   /var/spool/cron \
   /var/spool/exim4 \
   /var/spool/mail \
+  /var/spool/MailScanner \
   /var/spool/rsyslog \
   /var/www \
   || true # If prohibited files fail to be deleted, the linter will find them
