@@ -13,11 +13,11 @@ jobs:
         run: |
           docker pull ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13
 
-      - name: Run debsecan
+      - name: Install debsecan
         run: |
           docker run --rm \
             ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
-            bash -c "apt-get update && apt-get install -y debsecan
+            bash -c "apt-get update && apt-get install -y debsecan"
           
       - name: Parse debsecan output
         id: parse
