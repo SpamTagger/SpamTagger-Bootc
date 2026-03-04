@@ -1,6 +1,7 @@
 name: Container Security Scan
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"  # daily at 4am
 
