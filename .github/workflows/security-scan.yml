@@ -24,8 +24,8 @@ jobs:
       - name: Run and parse debsecan
         id: parse
         run: |
-          docker run debsecan \
-            bash -c "debsecan --suite trixie --format detail --only-fixed" > vulns
+          docker start debsecan \
+            "debsecan --suite trixie --format detail --only-fixed" > vulns
           echo count=$(cat vulns | wc -l) >> $GITHUB_OUTPUT
 
       - name: Open GitHub Issue if vulnerabilities found
