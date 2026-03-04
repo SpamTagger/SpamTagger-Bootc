@@ -13,25 +13,25 @@ jobs:
         run: |
           docker pull ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13
 
-      - name: Install debsecan
+      - name: Install and run debsecan
         run: |
           docker run --rm \
             ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
-            bash -c "apt-get update && apt-get install -y debsecan"
+            bash -c "apt-get update && apt-get install -y debsecan && debsecan --suite trixie --format detail --only-fixed > vulns"
           
       - name: Parse debsecan output
         id: parse
         run: |
           VULNS=$(docker run --rm \
             ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
-            bash -c "debsecan --suite trixie --format detail --only-fixed" > vulns)
-          echo "count=$(cat vulns | wc -l) >> $GITHUB_OUTPUT
+            bash -c "echo count=$(cat vulns | wc -l) >> $GITHUB_OUTPUT && vulns=$(cat vulns)"
+          echo "${{ steps.parse.outputs.vulns }}" > ./vulns
 
       - name: Open GitHub Issue if vulnerabilities found
         if: steps.parse.outputs.count != '0'
         uses: peter-evans/create-issue-from-file@v6
         with:
           title: "${{ steps.parse.outputs.count }} vulnerabilities detected in spamtagger-bootc:spamtagger-13"
-          content-filepath: vulns
+          content-filepath: ./vulns
           labels: security, automated
           token: ${{ secrets.GITHUB_TOKEN }}
