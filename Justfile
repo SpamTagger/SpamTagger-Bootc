@@ -533,6 +533,8 @@ build-disk $variant="" $version="" $registry="": start-machine
 #    qemu-img convert -c -O qcow2 {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
 #    rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version*' }}
 
+alias vm-disk := convert-disk 
+
 # Convert disk to supported other VM formats
 [group('BIB')]
 convert-disk $diskformat="" $variant="" $version="":
@@ -541,12 +543,16 @@ convert-disk $diskformat="" $variant="" $version="":
     : "${diskformat:=all}"
     {{ get-names }}
     set -ou pipefail
-    if [ ! -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
-        # Attempt to build if not already built
-        {{ just }} build-disk $variant $version
-        if [ ! -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
-            echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$variant-$version.qcow2\" not built" >&2 && exit 1
+    if [ ! -f {{ builddir / 'disks/$variant-$version.img' }} ]; then
+        just build-disk
+    fi
+    if [ "$diskformat" == "qcow2" ] || [ "$diskformat" == "all" ]; then
+        if [ -f {{ builddir / 'disks/$variant-$version.qcow2' }} ]; then
+            echo Removing existing disk image {{ builddir / 'disks/$variant-$version.qcow2' }}
+            rm -f {{ builddir / 'disks/$variant-$version.qcow2' }}
         fi
+        echo Creating QCOW2 disk
+        qemu-img convert -p -O qcow2 {{ builddir / 'disks/$variant-$version.img' }} {{ builddir / 'disks/$variant-$version.qcow2' }}
     fi
     if [ "$diskformat" == "vmdk" ] || [ "$diskformat" == "all" ]; then
         if [ -f {{ builddir / 'disks/$variant-$version.vmdk' }} ]; then
@@ -554,7 +560,7 @@ convert-disk $diskformat="" $variant="" $version="":
             rm -f {{ builddir / 'disks/$variant-$version.vmdk' }}
         fi
         echo Creating VMDK disk
-        qemu-img convert -p -O vmdk -o adapter_type=lsilogic,subformat=streamOptimized,compat6 {{ builddir / 'disks/$variant-$version.qcow2' }} {{ builddir / 'disks/$variant-$version.vmdk' }}
+        qemu-img convert -p -O vmdk -o adapter_type=lsilogic,subformat=streamOptimized,compat6 {{ builddir / 'disks/$variant-$version.img' }} {{ builddir / 'disks/$variant-$version.vmdk' }}
     fi
     if [ "$diskformat" == "vhdx" ] || [ "$diskformat" == "all" ]; then
         if [ -f {{ builddir / 'disks/$variant-$version.vhdx' }} ]; then
@@ -562,7 +568,7 @@ convert-disk $diskformat="" $variant="" $version="":
             rm -f {{ builddir / 'disks/$variant-$version.vhdx' }}
         fi
         echo Creating VHDX disk
-        qemu-img convert -p -O vhdx -o subformat=dynamic,block_size=1M {{ builddir / 'disks/$variant-$version.qcow2' }} {{ builddir / 'disks/$variant-$version.vhdx' }}
+        qemu-img convert -p -O vhdx -o subformat=dynamic,block_size=1M {{ builddir / 'disks/$variant-$version.img' }} {{ builddir / 'disks/$variant-$version.vhdx' }}
     fi
 
 # Bundle VM images into compressed archives with bundled files
