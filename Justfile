@@ -239,6 +239,9 @@ build-container $variant="" $version="":
         "--cpp-flag=-DVARIANT_SUB=$variant"
         "--cpp-flag=-DSOURCE_IMAGE=$source_image"
         "--cpp-flag=-DARCH_SUB=$ARCH"
+        "--cpp-flag=-DSPAMTAGGER_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/${variant}/commits?per_page=1 | jq -r '.[] | .sha')"
+        "--cpp-flag=-DST_MAILSCANNER_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/st-mailscanner/commits?per_page=1 | jq -r '.[] | .sha')"
+        "--cpp-flag=-DST_EXIM_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/st-exim/commits?per_page=1 | jq -r '.[] | .sha')"
     )
     for FLAG in $image_cpp_flags; do
         BUILD_ARGS+=("--cpp-flag=-D$FLAG")

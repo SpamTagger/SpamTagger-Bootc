@@ -44,6 +44,11 @@ RUN --mount=type=cache,dst=/var/cache \
 #include "build_files/packages"
 RUNEOF
 
+/* Arguments to invalidate cache if upstream repos changed */
+ARG ST_EXIM_HASH=ST_EXIM_HASH_SUB
+ARG ST_MAILSCANNER_HASH=ST_MAILSCANNER_HASH_SUB
+ARG SPAMTAGGER_HASH=SPAMTAGGER_HASH_SUB
+
 /* Run Bash recipe to configure operating system for this variant */
 RUN --mount=type=cache,dst=/var/cache \
   --mount=type=tmpfs,dst=/var/log \
