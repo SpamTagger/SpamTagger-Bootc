@@ -19,10 +19,8 @@ jobs:
         run: |
           docker run --name=debsecan \
             -t ghcr.io/spamtagger/spamtagger-bootc:spamtagger-13 \
-            bash -c "/usr/spamtagger/tools/security_scan.sh" > vulns
+            bash -c "CI=security-scan.yml /usr/spamtagger/tools/security_scan.sh" > vulns
           echo count=$(cat vulns | wc -l) >> $GITHUB_OUTPUT
-        env:
-          CI: security-scan.yml
           
       - name: Open GitHub Issue if vulnerabilities found
         id: create-issue
