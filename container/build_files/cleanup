@@ -37,6 +37,7 @@ done
 
 rm -rf \
   /etc/default/locale \
+  /etc/init.d/exim4 \
   /etc/ssh/ssh_*_key* \
   /opt \
   /run \
@@ -179,6 +180,11 @@ EOF
 
 cat >/usr/lib/sysusers.d/ntpsec.conf <<'EOF'
 u ntpsec -
+EOF
+
+cat >/usr/lib/sysusers.d/opendmarc.conf <<'EOF'
+u opendmarc -
+g opendmarc -
 EOF
 
 cat >/usr/lib/sysusers.d/spamtagger.conf <<'EOF'

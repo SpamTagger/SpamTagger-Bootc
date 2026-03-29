@@ -11,8 +11,12 @@ echo "##################################"
 setterm --foreground default
 
 setterm --foreground blue
-echo "# Setting up SpamTagger users..."
+echo "# Configuring SpamTagger-only users..."
 setterm --foreground default
+
+cat >/usr/lib/sysusers.d/Debian-snmp.conf <<'EOF'
+u Debian-snmp -
+EOF
 
 cat >/usr/lib/sysusers.d/mysql.conf <<'EOF'
 u mysql -
@@ -64,14 +68,6 @@ echo "# Setting default password (STPassw0rd)..."
 setterm --foreground default
 
 sed -i 's/root:[^:]*:/root:$y$j9T$kfLbiAeBa5PuQAZtTqBph1$ufRc85kbALH5Eg.IhtZcoyoDZ92SZfJmdX9p22Qg1D5:/' /etc/shadow
-
-setterm --foreground blue
-echo "# Configuring SpamTagger-only users..."
-setterm --foreground default
-
-cat >/usr/lib/sysusers.d/Debian-snmp.conf <<'EOF'
-u Debian-snmp -
-EOF
 
 setterm --foreground blue
 echo "# Creating empty configuration file..."
