@@ -42,19 +42,12 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   distrobox \
   dnsutils \
   fdisk \
-  firmware-amd-graphics \
-  firmware-intel-graphics \
-  firmware-linux \
-  firmware-linux-free \
-  firmware-linux-nonfree \
-  firmware-nvidia-graphics \
   git \
   gpg \
   jq \
   kbd \
   lsb-release \
   lzma \
-  open-vm-tools \
   podman \
   zstd
 rm -rf /var/lib/apt/lists
