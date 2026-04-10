@@ -266,6 +266,8 @@ build-container $variant="" $version="":
     echo "$labels" >> {{ builddir / '$variant-$version/Containerfile' }}
     sed -i '/^$/d;/^#.*$/d' {{ builddir / '$variant-$version/Containerfile' }}
 
+    {{ podman }} pull --policy=newer $source_image
+
     # Build Image
     {{ podman }} build -f container/Containerfile.in "${BUILD_ARGS[@]}" "${LABELS[@]}" "${TAGS[@]}" {{ justfile_dir() }}/container
 
