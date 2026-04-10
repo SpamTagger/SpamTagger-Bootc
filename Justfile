@@ -1,3 +1,4 @@
+# vim: set ts=4 sw=4 expandtab :
 set unstable := true
 
 just := just_executable()
@@ -438,100 +439,85 @@ build-disk $variant="" $version="" $registry="": start-machine
     {{ default-inputs }}
     : "${registry:=localhost}"
     {{ get-names }}
+    set -eou pipefail
+
     if [[ "$registry" == 'localhost' ]]; then
       fq_name="$image_name:$image_tag"
     else
       fq_name="$registry/$image_name:$image_tag"
     fi
-    set -eou pipefail
-    # Create Build Dir
-    mkdir -p {{ builddir / 'disks' }}
 
-    cp BIB/disk.toml {{ builddir / '$variant-$version.toml' }}
+    # Create Build Dir
+    mkdir -p {{ builddir }}/disks
+
+    # Prepare Disk configuration
+    echo "Preparing disk configuration at {{ builddir }}/$variant-$version.toml..."
+    cp BIB/disk.toml {{ builddir }}/$variant-$version.toml
     if [[ "{{ PUBKEY }}" != ""  ]]; then
-        sed -i "s|<SSHPUBKEY>|$(cat {{ PUBKEY }})|" {{ builddir / '$variant-$version.toml' }}
+        sed -i "s|<SSHPUBKEY>|$(cat {{ PUBKEY }})|" {{ builddir }}/$variant-$version.toml
     else
-        sed -i "/<SSHPUBKEY>/d" {{ builddir / '$variant-$version.toml' }}
+        sed -i "/<SSHPUBKEY>/d" {{ builddir }}/$variant-$version.toml
     fi
- 
-    # Load image into rootful podman-machine
-    if ! sudo {{ podman }} image exists $fq_name; then
-        # If using localhost registry, we need to build
-        if  [ "$registry" == "localhost" ]; then
-            echo "NEED TO BUILD"
-            sudo just build $variant $version
-        # otherwise pull image from registry
-        else
-            sudo {{ podman }} pull $fq_name
+
+    # If using localhost registry, we need to build
+    if  [ "$registry" == "localhost" ]; then
+        # Ensure image exists locally
+        echo "Checking if $fq_name exists locally..."
+        if ! {{ podman }} image exists $fq_name; then
+            echo "$fq_name does not exist. Running 'just build-container $variant $version'..."
+            just build $variant $version
         fi
+        # Copy into Podman Machine
+        echo "Copying local image to Podman Machine VM (so that we can run it as 'root')..."
+        TMP_IMAGE="$image_name-$image_tag.tar"
+        if [[ -e {{ builddir }}/$TMP_IMAGE ]]; then
+            rm {{ builddir }}/$TMP_IMAGE
+        fi
+        {{ podman }} save --format oci-archive -o "{{ builddir }}/$TMP_IMAGE" "$fq_name"
+        podman machine ssh rm /tmp/$TMP_IMAGE || true
+        podman machine cp "{{ builddir }}/$TMP_IMAGE" podman-machine-default:/tmp/
+        echo "Loading image into Podman Machine storage..."
+        podman machine ssh sudo podman rmi $fq_name || true
+        podman machine ssh sudo podman load -i /tmp/$TMP_IMAGE
+        rm -f "{{ builddir }}/$TMP_IMAGE"
+    else
+        echo "Pulling image from $fq_name..."
+        {{ podman-remote }} pull $fq_name
     fi
-    if ! {{ podman-remote }} image exists $fq_name; then
-        COPYTMP="$(mktemp -p {{ builddir }} -d -t podman_scp.XXXXXXXXXX)" && trap 'rm -rf $COPYTMP' EXIT SIGINT
-        TMPDIR="$COPYTMP" {{ podman }} image scp $fq_name podman-machine-default-root::
-        rm -rf "$COPYTMP"
-    fi
- 
+
     # Remove existing image, if it exists
-    if [ -f "{{ builddir /'disks/$variant-$version.img' }}" ]; then
-        echo Removing existing disk image {{ builddir /'disks/$variant-$version.img' }}
-        rm -f {{ builddir /'disks/$variant-$version.img' }}
+    if [ -f {{ builddir }}/disks/$variant-$version.img ]; then
+        echo "Removing existing disk image {{ builddir }}/disks/$variant-$version.img..."
+        rm -f {{ builddir }}/disks/$variant-$version.img
     fi
  
+    # Preallocate disk image
     if [[ ! -d {{ builddir }}/disks ]]; then
         mkdir {{ builddir }}/disks
     fi
     if [[ ! -e {{ builddir }}/disks/$variant-$version.img ]]; then
+        echo "Allocating a blank disk image at {{ builddir }}/disks/$variant-$version.img..."
         fallocate -l 20G "{{ builddir }}/disks/$variant-$version.img"
     fi
-    # Build Disk Image
-    echo $fq_name
-    sudo podman run \
+
+    # Build Disk Image insde machine using rootful storage
+    echo "Booting $fq_name in Podman Machine and installing to disk image with `bootc install to-disk`..."
+    {{ podman-remote }} run \
         --rm --privileged --pid=host \
         -it \
-        -v /etc/containers:/etc/containers{{ if selinux == 'true' { ':Z' } else { '' } }} \
-        -v /var/lib/containers:/var/lib/containers{{ if selinux == 'true' { ':Z' } else { '' } }} \
-        {{ if selinux == 'true' { '-v /sys/fs/selinux/:/sys/fs/selinux' } else { '' } }} \
-        {{ if selinux == 'true' { '--security-opt label=type:unconfined_t' } else { '' } }} \
-        -v /dev:/dev \
+        -v /{{ builddir }}/disks:/data{{ if selinux == 'true' { ':Z' } else { '' } }} \
         -e BOOTC_SETENFORCE0_FALLBACK=1 \
         -e RUST_LOG=debug \
-        -v "{{ builddir }}/disks:/data" \
-        "$fq_name" bootc install to-disk --composefs-backend --via-loopback "/data/$variant-$version.img" --filesystem ext4 --target-imgref $registry/$image_name:$variant-$version --wipe --bootloader systemd --karg "splash"
-
-#    # Pull Bootc Image Builder
-#    {{ podman-remote }} pull --retry 3 {{ bootc-image-builder }}
-#
-#    # Remove existing image, if it exists
-#    if [ -f "{{ builddir /'disks/$variant-$version.qcow2' }}" ]; then
-#        echo Removing existing disk image {{ builddir /'disks/$variant-$version.qcow2' }}
-#        rm -f {{ builddir /'disks/$variant-$version.qcow2' }}
-#    fi
-#    # Remove existing image, if it exists
-#    if [ -f "{{ builddir /'disks/$variant-$version.qcow2' }}" ]; then
-#        echo Removing existing disk image {{ builddir /'disks/$variant-$version.qcow2' }}
-#        rm -f {{ builddir /'disks/$variant-$version.qcow2' }}
-#    fi
-#    # Build Disk Image
-#    {{ podman-remote }} run \
-#        --rm \
-#        -it \
-#        --privileged \
-#        --pull=newer \
-#        --security-opt label=type:unconfined_t \
-#        -v {{ builddir / '$variant-$version' }}.toml:/config.toml:ro \
-#        -v {{ builddir }}/disks:/output \
-#        -v /var/lib/containers/storage:/var/lib/containers/storage \
-#        quay.io/centos-bootc/bootc-image-builder:latest \
-#        {{ if env('CI', '') != '' { '--progress verbose' } else { '--progress auto' } }} \
-#        --type qcow2 \
-#        --use-librepo=True \
-#        --rootfs ext4 \
-#        $fq_name
-#
-#    # Sparsify and compress
-#    echo Shrinking disk image
-#    qemu-img convert -c -O qcow2 {{ builddir }}/disks/qcow2/disk.qcow2 {{ builddir /'disks/$variant-$version.qcow2' }}
-#    rm -rf {{ builddir }}/disks/qcow2 {{ builddir }}/disks/manifest-qcow2.json {{ builddir / '$variant-$version*' }}
+        "$fq_name" \
+        bootc install to-disk "/data/$variant-$version.img" \
+            --via-loopback \
+            --composefs-backend \
+            --filesystem ext4 \
+            --target-imgref $registry/$image_name:$variant-$version \
+            --wipe \
+            --bootloader systemd \
+            --karg "splash"
+    echo "Disk image should be available at {{ builddir }}/disks/$variant-$version.img"
 
 alias vm-disk := convert-disk 
 
