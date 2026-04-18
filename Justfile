@@ -13,8 +13,8 @@ selinux := path_exists('/sys/fs/selinux')
 # Source Images
 
 rechunker := shell("yq '.images.rechunker.source' images.yaml")
-bootc-image-builder := shell("yq '.images.bootc-image-builder.source' images.yaml")
-qemu := shell("yq '.images.qemu.source' images.yaml")
+bootc-image-builder := shell("yq '.images[\"bootc-image-builder\"].source' images.yaml")
+qemu := shell("yq '.images[\"qemu\"].source' images.yaml")
 
 _default:
     @just --list --unsorted
@@ -35,9 +35,11 @@ function image-get() {
       echo "image-get: requires a key argument"
       exit 1
     fi
-    KEY="${1}"
-    data=$(IFS="" yq -Mr "explode(.)|.images|.' + image + '-$variant-$version|.$KEY" images.yaml)
-    echo ${data}
+    if [ "$1" = "cppFlags" ]; then
+      echo $(IFS="" yq -Mr ".images[\"spamtagger-bootc-${variant}-${version}\"][\"$1\"][]?" images.yaml)
+    else
+      echo $(IFS="" yq -Mr ".images[\"spamtagger-bootc-${variant}-${version}\"][\"$1\"]" images.yaml)
+    fi
 }
 source_image="$(image-get source)"
 image_org="$(image-get org)"
@@ -48,7 +50,6 @@ image_upstream="$(image-get upstream)"
 image_version="$(image-get version)"
 exim_version="$(image-get exim)"
 image_description="$(image-get description)"
-image_cpp_flags="$(image-get cppFlags[])"
 image_is_default="$(image-get default)"
 image_product="$(image-get product)"
 if [ "true" != "${image_is_default}" ]; then
@@ -56,6 +57,7 @@ if [ "true" != "${image_is_default}" ]; then
 fi
 image_tag="$image_product-$image_version"
 '
+
 [private]
 build-missing := '
 cmd="' + just + ' build $variant $version"
@@ -81,15 +83,11 @@ log_sum "\`\`\`"
 '''
 
 [group('Utility')]
-explode-yaml:
-    yq -r "explode(.)|.images" images.yaml
-
-[group('Utility')]
 check-valid-image $variant="" $version="":
     #!/usr/bin/env bash
     set -e
     {{ default-inputs }}
-    data=$(IFS='' yq -Mr "explode(.)|.images|.{{ image }}-$variant-$version" images.yaml)
+    data=$(IFS='' yq -Mr ".images[\"{{ image }}-$variant-$version\"]" images.yaml)
     if [[ "null" == "$data" ]]; then
         echo "ERROR Invalid inputs: no matching image definition found for: {{ image }}-${variant}-${version}"
         exit 1
@@ -244,9 +242,11 @@ build-container $variant="" $version="":
         "--cpp-flag=-DST_MAILSCANNER_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/st-mailscanner/commits?per_page=1 | jq -r '.[] | .sha')"
         "--cpp-flag=-DST_EXIM_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/st-exim/commits?per_page=1 | jq -r '.[] | .sha')"
     )
+    mapfile -t image_cpp_flags < <(image-get cppFlags)
     for FLAG in $image_cpp_flags; do
         BUILD_ARGS+=("--cpp-flag=-D$FLAG")
     done
+
     {{ if env('CI', '') != '' { 'BUILD_ARGS+=("--cpp-flag=-DCI_SETX")' } else { '' } }}
 
     # Render Containerfile
@@ -266,7 +266,7 @@ build-container $variant="" $version="":
     echo "$labels" >> {{ builddir / '$variant-$version/Containerfile' }}
     sed -i '/^$/d;/^#.*$/d' {{ builddir / '$variant-$version/Containerfile' }}
 
-    {{ podman }} pull --policy=newer $source_image
+    {{ podman }} pull $source_image
 
     # Build Image
     {{ podman }} build -f container/Containerfile.in "${BUILD_ARGS[@]}" "${LABELS[@]}" "${TAGS[@]}" {{ justfile_dir() }}/container
