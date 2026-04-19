@@ -476,12 +476,10 @@ build-disk $variant="" $version="" $registry="": start-machine
             rm {{ builddir }}/$TMP_IMAGE
         fi
         {{ podman }} save --format oci-archive -o "{{ builddir }}/$TMP_IMAGE" "$fq_name"
-        podman machine ssh rm /tmp/$TMP_IMAGE || true
-        podman machine cp "{{ builddir }}/$TMP_IMAGE" podman-machine-default:/tmp/
+        podman machine ssh rm /tmp/$TMP_IMAGE 2>/dev/null || true
+        podman machine ssh sudo podman rmi $fq_name 2>/dev/null || true
         echo "Loading image into Podman Machine storage..."
-        podman machine ssh sudo podman rmi $fq_name || true
-        podman machine ssh sudo podman load -i /tmp/$TMP_IMAGE
-        rm -f "{{ builddir }}/$TMP_IMAGE"
+        cat "{{ builddir }}/$TMP_IMAGE" | podman machine ssh sudo podman load
     else
         echo "Pulling image from $fq_name..."
         {{ podman-remote }} pull $fq_name
