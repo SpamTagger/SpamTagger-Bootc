@@ -201,3 +201,5 @@ EOF
 
 # /* systemd-timesyncd is removed during package install and extra user causes bootc lint error */
 userdel systemd-timesync
+
+sync
