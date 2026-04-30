@@ -4,7 +4,7 @@ run-name: Build SpamTagger and SpamTagger Core by @${{ github.actor }}
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 8 * * 0" # 0800 UTC Sunday
+    - cron: "0 8 * * 6" # 0800 UTC Saturday
   pull_request:
     branches:
       - main
