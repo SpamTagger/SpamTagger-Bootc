@@ -30,7 +30,7 @@ setterm --foreground blue
 echo "# Cloning SpamTagger and Zend..."
 setterm --foreground default
 if [[ ! -e /usr/spamtagger ]]; then
-  git clone --recurse-submodules --depth=1 https://github.com/SpamTagger/SpamTagger /usr/spamtagger
+  git clone --recurse-submodules --depth=1 $APP_REPO /usr/spamtagger
 fi
 
 setterm --foreground blue
