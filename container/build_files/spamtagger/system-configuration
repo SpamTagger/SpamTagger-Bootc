@@ -29,7 +29,9 @@ EOF
 setterm --foreground blue
 echo "# Cloning SpamTagger and Zend..."
 setterm --foreground default
-git clone --recurse-submodules --depth=1 https://github.com/SpamTagger/SpamTagger /usr/spamtagger
+if [[ ! -e /usr/spamtagger ]]; then
+  git clone --recurse-submodules --depth=1 https://github.com/SpamTagger/SpamTagger /usr/spamtagger
+fi
 
 setterm --foreground blue
 echo "# Cleaning up repo files..."

@@ -48,6 +48,11 @@ RUNEOF
 ARG ST_EXIM_HASH=ST_EXIM_HASH_SUB
 ARG ST_MAILSCANNER_HASH=ST_MAILSCANNER_HASH_SUB
 ARG SPAMTAGGER_HASH=SPAMTAGGER_HASH_SUB
+#ifdef USE_LOCAL_REPO
+COPY local_repo /usr/spamtagger
+#else
+ARG APP_REPO=APP_REPO_SUB
+#endif /* USE_LOCAL_REPO */
 
 /* Run Bash recipe to configure operating system for this variant */
 RUN --mount=type=cache,dst=/var/cache \

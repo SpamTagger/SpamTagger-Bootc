@@ -1,5 +1,6 @@
 # vim: set ts=4 sw=4 expandtab :
 set unstable := true
+set shell:= ["bash", "-c"]
 
 just := just_executable()
 podman := require('podman')
@@ -8,6 +9,7 @@ builddir := shell('mkdir -p $1 && echo $1', absolute_path(env('SPAMTAGGER_BUILD'
 image := "spamtagger-bootc"
 variant := env('SPAMTAGGER_VARIANT', shell('yq ".defaults.variant" images.yaml'))
 version := env('SPAMTAGGER_VERSION', shell('yq ".defaults.version" images.yaml'))
+app_repo := env('APP_REPO', "https://github.com/SpamTagger/$variant")
 selinux := path_exists('/sys/fs/selinux')
 
 # Source Images
@@ -133,28 +135,6 @@ gen-tags $variant="" $version="":
     output["TIMESTAMP"]="$TIMESTAMP"
     echo "${output[@]@K}"
 
-# Check Just Syntax
-[group('Just')]
-check:
-    #!/usr/bin/env bash
-    find . -type f -name "*.just" | while read -r file; do
-        echo "Checking syntax: $file" >&2
-        {{ just }} --unstable --fmt --check -f $file
-    done
-    echo "Checking syntax: Justfile" >&2
-    {{ just }} --unstable --fmt --check -f Justfile
-
-# Fix Just Syntax
-[group('Just')]
-fix:
-    #!/usr/bin/env bash
-    find . -type f -name "*.just" | while read -r file; do
-        echo "Checking syntax: $file" >&2
-        {{ just }} --unstable --fmt -f $file
-    done
-    echo "Checking syntax: Justfile" >&2
-    {{ just }} --unstable --fmt -f Justfile || { exit 1; }
-
 # Run a Container
 
 alias run := run-container
@@ -246,6 +226,12 @@ build-container $variant="" $version="":
     for FLAG in $image_cpp_flags; do
         BUILD_ARGS+=("--cpp-flag=-D$FLAG")
     done
+    if [[ "{{ app_repo }}" == http* ]]; then
+        BUILD_ARGS+=("--cpp-flag=-DAPP_REPO_SUB={{ app_repo }}")
+    else
+        BUILD_ARGS+=("--cpp-flag=-DUSE_LOCAL_REPO")
+        BUILD_ARGS+=("--cpp-flag=-DAPP_REPO_SUB={{ app_repo }}")
+    fi
 
     {{ if env('CI', '') != '' { 'BUILD_ARGS+=("--cpp-flag=-DCI_SETX")' } else { '' } }}
 
@@ -256,7 +242,7 @@ build-container $variant="" $version="":
             flags+=("${f#*flag=}")
         fi
     done
-    {{ require('cpp') }} -E -traditional -P container/Containerfile.in ${flags[@]} > {{ builddir / '$variant-$version/Containerfile' }}
+    {{ require('cpp') }} -E --traditional -P container/Containerfile.in ${flags[@]} > {{ builddir / '$variant-$version/Containerfile' }}
     labels="LABEL"
     for l in "${LABELS[@]}"; do
         if [[ "$l" != "--label" ]]; then
@@ -518,12 +504,11 @@ build-disk $variant="" $version="" $registry="": start-machine
             --bootloader systemd \
             --karg "splash"
     echo "Disk image should be available at {{ builddir }}/disks/$variant-$version.img"
-
-alias vm-disk := convert-disk 
+    rm {{ builddir }}/$TMP_IMAGE
 
 # Convert disk to supported other VM formats
 [group('BIB')]
-convert-disk $diskformat="" $variant="" $version="":
+vm-disk $diskformat="" $variant="" $version="":
     #!/usr/bin/env bash
     {{ default-inputs }}
     : "${diskformat:=all}"
@@ -583,7 +568,7 @@ bundle-vm $vmformat="" $variant="" $version="":
             DISK='qcow2'
         fi
         if [ ! -f {{ builddir / 'disks/$variant-$version' }}.$DISK ]; then
-            {{ just }} convert-disk $variant $version $DISK
+            {{ just }} vm-disk $variant $version $DISK
             if [ ! -f {{ builddir / 'disks/$variant-$version' }}.$DISK ]; then
                 echo "{{ style('error') }}Error:{{ NORMAL }} Disk Image \"$version-$variant.$DISK\" does not exist" >&2 && exit 1
             fi
@@ -633,140 +618,3 @@ run-disk $variant="" $version="" $registry="":
     fi
     macadam ssh -- cat /etc/os-release
     macadam ssh -- systemctl status
-
-# Build ISO
-[group('BIB')]
-build-iso $variant="" $version="" $registry="": start-machine
-    #!/usr/bin/env bash
-    {{ default-inputs }}
-    : "${registry:=localhost}"
-    {{ get-names }}
-    fq_name="$registry/$image_name:$variant-$version"
-    set -eou pipefail
-
-    if [ ! -d {{ builddir / 'isos' }} ]; then
-        echo Creating build directory {{ builddir / 'isos' }}
-        mkdir -p {{ builddir / 'isos' }}
-    elif [ -e {{ builddir / 'isos/$variant-$version.iso' }} ]; then
-        echo Removing existing ISO image {{ builddir / 'isos/$variant-$version.iso' }}
-        rm {{ builddir / 'isos/$variant-$version.iso' }}
-    fi
-
-    if [ -d {{ builddir / 'product' }} ]; then
-        rm -rf {{ builddir / 'product' }}
-    fi
-
-    declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
-    TIMESTAMP="${gen_tags["TIMESTAMP"]}"
-
-    cp -r BIB/anaconda/product {{ builddir / 'product' }}
-    cd {{ builddir / 'product' }}
-    if [ "$variant" == 'spamtagger' ]; then
-      sed -i "s/<VARIANT>/SpamTagger/" .buildstamp
-    else
-      sed -i "s/<VARIANT>/SpamTagger Core/" .buildstamp
-    fi
-    sed -i "s/<VERSION>/$version/" .buildstamp
-    sed -i "s/<TAG>/$TIMESTAMP/" .buildstamp
-    find . | cpio -c -o | gzip -9cv >../product.img
-    cd -
-    mv {{ builddir /'product.img' }} ./
-    #rm -rf {{ builddir / 'product' }}
-
-    # Process Template
-    cp BIB/iso.toml {{ builddir / '$variant-$version.toml' }}
-    sed -i "s|<URL>|$fq_name|" {{ builddir / '$variant-$version.toml' }}
-    if [[ $registry == "localhost" ]]; then
-        sed -i "s|<SIGPOLICY>||" {{ builddir / '$variant-$version.toml' }}
-    else
-        sed -i "s|<SIGPOLICY>| --enforce-container-sigpolicy|" {{ builddir / '$variant-$version.toml' }}
-    fi
-
-    # Load image into rootful podman-machine
-    if ! {{ podman-remote }} image exists $fq_name && ! {{ podman }} image exists $fq_name; then
-        echo "{{ style('error') }}Error:{{ NORMAL }} Image \"$fq_name\" not in image-store" >&2
-        exit 1
-    fi
-    if ! {{ podman-remote }} image exists $fq_name; then
-        COPYTMP="$(mktemp -p {{ builddir }} -d -t podman_scp.XXXXXXXXXX)" && trap 'rm -rf $COPYTMP' EXIT SIGINT
-        TMPDIR="$COPYTMP" {{ podman }} image scp $fq_name podman-machine-default-root::
-        rm -rf "$COPYTMP"
-    fi
-
-    # Pull Bootc Image Builder
-    {{ podman-remote }} pull --retry 3 {{ bootc-image-builder }}
-
-    if [ ! -d {{ builddir / '$variant-$version' }} ]; then
-        mkdir {{ builddir / '$variant-$version' }}
-    fi
-
-    # Build ISO
-    {{ podman-remote }} run \
-        --rm \
-        -it \
-        --privileged \
-        --pull=newer \
-        --security-opt label=type:unconfined_t \
-        -v {{ builddir / '$variant-$version.toml' }}:/config.toml:ro \
-        -v {{ builddir / '$variant-$version' }}:/output \
-        -v /var/lib/containers/storage:/var/lib/containers/storage \
-        quay.io/centos-bootc/bootc-image-builder:latest \
-        {{ if env('CI', '') != '' { '--progress verbose' } else { '--progress auto' } }} \
-        --type anaconda-iso \
-        --use-librepo=True \
-        $fq_name
-
-    mv {{ builddir / '$variant-$version/bootiso/install.iso' }} {{ builddir / 'isos/$variant-$version.iso' }}
-    rm -rf {{ builddir / '$variant-$version' }} product.img
-
-# Run ISO
-[group('BIB')]
-run-iso $variant="" $version="":
-    #!/usr/bin/env bash
-    {{ default-inputs }}
-    {{ get-names }}
-    set -euo pipefail
-    if [ ! -f {{ builddir / '$variant-$version/bootiso/install.iso' }} ]; then
-        echo "{{ style('error') }}Error:{{ NORMAL }} Install ISO \"$image_name-$variant-$version\" not built" >&2 && exit 1
-    fi
-    # Determine an available port to use
-    port=8006
-    while grep -q :${port} <<< $(ss -tunalp); do
-        port=$(( port + 1 ))
-    done
-    echo "Using Port: ${port}"
-    echo "Connect to http://localhost:${port}"
-
-    # Needs to be on the podman-machine due to dnsmasq requesting excessive UIDs/GIDs
-
-    # Ram Size
-    ram_size="$({{ podman-remote }} machine inspect | jq -r '.[].Resources.Memory')"
-    ram_size="$(( ram_size / 2))"
-    ram_size="$(( ram_size >= 8192 ? 8192 : $(( ram_size >= 4096 ? 4096 : $(( ram_size >= 2048 ? 2048 : $(( ram_size >= 1024 ? 1024 : 0 )) )) )) ))"
-    if [ $ram_size = "0" ]; then
-        echo "{{ style('error') }}Error:{{ NORMAL }} Not Enough Memory configured in podman machine" >&2 && exit 1
-    fi
-
-    # CPU Cores
-    cpu_cores="$(( $({{ podman-remote }} machine inspect | jq -r '.[].Resources.CPUs') / 2 ))"
-    cpu_cores="$(( cpu_cores > 0 ? cpu_cores : 1 ))"
-
-    # Pull qemu container
-    {{ podman-remote }} pull --retry 3 {{ qemu }}
-
-    # Set up the arguments for running the VM
-    run_args=()
-    run_args+=(--rm)
-    run_args+=(--publish "127.0.0.1:${port}:8006")
-    run_args+=(--env "CPU_CORES=$cpu_cores")
-    run_args+=(--env "RAM_SIZE=${ram_size}M")
-    run_args+=(--env "DISK_SIZE=20G")
-    run_args+=(--env "TPM=Y")
-    run_args+=(--env "BOOT_MODE=windows_secure")
-    run_args+=(--device=/dev/kvm)
-    run_args+=(--device=/dev/net/tun)
-    run_args+=(--cap-add NET_ADMIN)
-    run_args+=(--volume "{{ builddir / '$variant-$version/bootiso/install.iso' }}":"/boot.iso")
-
-    # Run the VM and open the browser to connect
-    {{ podman-remote }} run "${run_args[@]}" {{ qemu }}
