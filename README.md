@@ -6,74 +6,35 @@
 
 This tool currently builds from a generic Debian Bootc image with few modification and does not yet produce a usable SpamTagger configuration. Regardless of the progress made in this repository, note that the [SpamTagger](https://github.com/SpamTagger/SpamTagger) application is still under construction as well. Any images built from this repository will not provide functional email filtering until both this repository and that one have a stable release.
 
-## 🏝️ Background 🏝️
+## 🏝️ What is SpamTagger-Bootc? 🏝️
 
-This project pulls significantly from various projects under the [Universal Blue (UBlue)](https://github.com/ublue-os) umbrella, as well as other projects inspired by it. SpamTagger-Bootc aims to produce minimal images with only the essential tools needed for email filtering and administration.
+The SpamTagger-Bootc repository is responsible for [building](https://github.com/SpamTagger/SpamTagger-Bootc/blob/main/ARCHITECTURE.md) [Debian](https://debian.org)-based [BootC](https://bootc.dev) operating system containers with [SpamTagger](https://spamtagger.org) appliance functionality built in to the read-only layer of the image.
 
-SpamTagger inherits from MailCleaner, which has historically been built of Debian throught its whole life. In order to remain familiar to users and to require the fewest possible changes, an updated Debian base is maintained. There is currently no official Debian Bootc image, so we are currently maintaining [our own fork](https://github.com/SpamTagger/debian-boot-core) of a community-built image.
+## ✨ Features ✨
 
-BootC is a new and exciting technology which allows for creating read-only root filesystem images which can be deployed and atomically updated in a wide variety of contexts. It should ensure that SpamTagger appliances remain consistent, secure, up-to-date, and immune from degradation over time due to [hysteresis](https://en.wikipedia.org/wiki/Hysteresis).
+This architecture provides:
 
-SpamTagger is deployed within the read-only layer of these images so that the application code cannot be broken accidentally. Facilities remain in place for user modifications within a writable directory and additional packages and features can be added via contributions to the project, or through `system-sysext` extensons, containers, `brew` packages, `pip` or other package managers.
+* Simple building of images with CI/CD
+* Consistency between deployments
+* Predictable upgrade behaviour
+* Clean roll-backs
+* Incorruptable application code
+* [Among other considerations](https://github.com/orgs/SpamTagger/discussions/3)
 
-## 🧑‍🔧 Technical Details 🧑‍🔧
+## 🤔 Why Does This Exist 🤔
 
-The rationale for the adopting of BootC was discussed in [this thread](https://github.com/orgs/SpamTagger/discussions/3). This projects aims to keeping the tooling open, easy to follow, functional in a local development environment, and automated using GitHub workflows.
+SpamTagger is a revival of the MailCleaner spam filtering appliance. Historically, MailCleaner didn't have a very consistent and repeatable set of build tools, making it very difficult to ensure that subsequent builds would be upgrade-compatible with older builds. Application code was completely unprotected and changes throughout the life of the appliance could cause appliance functionality to degrade over time (see [hysteresis](https://en.wikipedia.org/wiki/Hysteresis)).
 
-To understand how the tools work SpamTagger images:
+With the SpamTagger revival as a fully free and open source project, it was crucial to find a way to build, distribute and provide consistent upgrades for appliances while minimizing hosting costs and complexity.
 
-1. are defined via `images.yaml` with key "static" inputs required for a build (some tags and labels are generated or inspected).
-2. use `just` recipies to manage the build related functions, providing the same local build commands as are used in CI.
-3. use Podman's native C pre-processor (CPP) support for flow control (generation of a container file from `Containerfile`) instead of entirely static definitions in one or more `Containerfile`.
-4. use devcontainer for a consistent build environment both locally and in CI
+BootC is a fairly new technology which is in its very early days for non-RHEL systems, but some early exploration has shown that it is possible to build successfully on Debian, which allows SpamTagger to continue with as few architectural changes as possible from MailCleaner's historical legacy.
 
-`images.yaml` uses anchors and aliases to build different images and tags from common components. A hint to see the expanded contents:
+## 🧭 Getting Started 🧭
 
-```
-yq -r "explode(.)|.images" images.yaml
-```
+Typically, you shouldn't need to touch anything in this repository. GitHub actions regularly build new OS images with the latest version of SpamTagger and the latest Debian packages available at the time, and we provide VM images based on those.
 
-SpamTagger will primarily build two images:
+If you want to [contribute](https://github.com/SpamTagger/SpamTagger/Wiki/Contributing-Guide) to SpamTagger and your contribution applies to the OS layer rather than the application layer (eg. adding additional packages, or configuring system services), then you may need to contribute those changes here.
 
-- one for [SpamTagger](https://github.com/SpamTagger/SpamTagger), the direct successor to MailCleaner which retains a WebUI and other more complex features.
-- and eventually one for [SpamTagger Core](https://github.com/SpamTagger/SpamTagger-Core), the simplified, commandline-only hard fork
+You may also just want to build a custom SpamTagger-Bootc image by pointing this builder to a custom SpamTagger repository, layering on additional changes, or building your own application images based on this one.
 
-Each of those is tagged at runtime with the version of Debian which it is based upon as well as a timestamp. This allows users to track a different life-cycle:
-
-- tracking `spamtagger` will ensure that you always update to the latest, including across OS upgrades.
-- tracking `spamtagger-13` will ensure that you have the latest version built on Debian 13, but not any future releases tagged as `spamtagger-14`.
-- tracking `spamtagger-13-20250801` will ensure that you never update past that specific release.
-
-In the future, additional tags for testing experimental feature branches.
-
-## 🔨 Building 🔨
-
-Building SpamTagger Bootc images on any workstation should be identical to how it is build with GitHub Actions. However you will need the following dependencies:
-
-- `just` - The main scripting/orchestration tool.
-- `bash` - Required for most commands within the `just` scripts.
-- GNU core utiliies (especially `sed` and `grep`) - Required to modify template files and take conditional actions.
-- `cpp` - Required for preprossor arguments to run different actions for each variant.
-- `jq` - Required to parse JSON manifest files.
-- `yq` - Required to parse YAML markup files for different images and versions that are available.
-- `podman` - Container runtime for running the isolated build processes and including upstream image layers.
-- `skopeo` - Required to fetch details from existing images in the registry.
-- `podman-machine` (optional) - Only required for building VM disk images and ISOs.
-
-Each build action has an associated `just` command. You can view them all by running `just --list`.
-
-You will primarily need:
-
-- `just build` - (alias for `just build-container`) to build the container image and tag it within your container list (`podman images`)
-- `just hhd-rechunk` - to reduce the container size.
-- `just build-disk` - create a `qcow2` disk image from the container image.
-- `just build-iso` - create an ISO installation image from the `qcow2` image.
-- `just convert-disk` - converts `qcow2` image to `vhdx` and/or `vmdk`.
-- `just bundle-vm` - compresses VM images with accompanying files into an archive and creates a checksum.
-- `push-to-cdn` - (work-in-progress) push the compressed VMs and checksums to CDN for download.
-
-## See Also
-
-- [SpamTagger](https://github.com/SpamTagger/SpamTagger) application repository
-- [SpmTagger Core](https://github.com/SpamTagger-Core) application repository
-- Other [SpamTagger](https://github.com/SpamTagger) projects
+You can read more in the [architecture](https://github.com/SpamTagger/SpamTagger-Bootc/wiki/Architecture) and [build](https://github.com/SpamTagger/SpamTagger-Bootc/wiki/Building) documents to learn how the parts go together and how to build your own modified or unmodified images.
