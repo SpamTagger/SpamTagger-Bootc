@@ -448,6 +448,7 @@ build-disk $variant="" $version="" $registry="": start-machine
     fi
 
     # If using localhost registry, we need to build
+    TMP_IMAGE="$image_name-$image_tag.tar"
     if  [ "$registry" == "localhost" ]; then
         # Ensure image exists locally
         echo "Checking if $fq_name exists locally..."
@@ -457,7 +458,6 @@ build-disk $variant="" $version="" $registry="": start-machine
         fi
         # Copy into Podman Machine
         echo "Copying local image to Podman Machine VM (so that we can run it as 'root')..."
-        TMP_IMAGE="$image_name-$image_tag.tar"
         if [[ -e {{ builddir }}/$TMP_IMAGE ]]; then
             rm {{ builddir }}/$TMP_IMAGE
         fi
@@ -466,6 +466,7 @@ build-disk $variant="" $version="" $registry="": start-machine
         podman machine ssh sudo podman rmi $fq_name 2>/dev/null || true
         echo "Loading image into Podman Machine storage..."
         cat "{{ builddir }}/$TMP_IMAGE" | podman machine ssh sudo podman load
+        rm {{ builddir }}/$TMP_IMAGE
     else
         echo "Pulling image from $fq_name..."
         {{ podman-remote }} pull $fq_name
@@ -504,7 +505,15 @@ build-disk $variant="" $version="" $registry="": start-machine
             --bootloader systemd \
             --karg "splash"
     echo "Disk image should be available at {{ builddir }}/disks/$variant-$version.img"
-    rm {{ builddir }}/$TMP_IMAGE
+
+# Build Disk Image
+[group('BIB')]
+build-disk-from-ghcr $variant="" $version="":
+    #!/usr/bin/env bash
+    {{ default-inputs }}
+    {{ get-names }}
+    just build-disk $variant $version ghcr.io/$image_org
+    echo "Completed ghcr.io/$image_org/$image_name:$variant-$version"
 
 # Convert disk to supported other VM formats
 [group('BIB')]
