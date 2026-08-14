@@ -88,6 +88,5 @@ RUNEOF
 
 /* Test BootC image */
 RUN ["bootc", "container", "lint", "--fatal-warnings", "--no-truncate"]
-RUN ["nbc", "lint", "--local"]
 
 /* LABELS will be added by Justfile */

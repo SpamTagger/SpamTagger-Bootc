@@ -39,6 +39,7 @@ rm -rf \
   /etc/default/locale \
   /etc/init.d/exim4 \
   /etc/ssh/ssh_*_key* \
+  /etc/machine-id \
   /opt \
   /run \
   /var/backups \
