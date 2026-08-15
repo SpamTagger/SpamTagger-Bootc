@@ -377,7 +377,7 @@ push-to-registry $variant="" $version="" $destination="" $transport="":
     tags=(${gen_tags["TAGS"]})
     for tag in "${tags[@]}"; do
         for i in {1..5}; do
-            {{ podman }} push {{ if env('COSIGN_PRIVATE_KEY', '') != '' { '--sign-by-sigstore=/tmp/sigstore-params.yaml' } else { '' } }} "localhost/$image_name:$variant-$tag" "$transport$destination/$variant-$tag" 2>&1 && break || sleep $((5 * i));
+            {{ podman }} push {{ if env('COSIGN_PRIVATE_KEY', '') != '' { '--sign-by-sigstore=/tmp/sigstore-params.yaml' } else { '' } }} "localhost/$image_name:$variant-$tag" "$transport$destination/$image_name:$variant-$tag" 2>&1 && break || sleep $((5 * i));
             if [[ $i -eq '5' ]]; then
                 exit 1
             fi
