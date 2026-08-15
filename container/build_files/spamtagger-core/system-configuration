@@ -6,7 +6,48 @@ set ${CI:+-x} -euo pipefail
 
 setterm --foreground green
 echo "##################################"
-echo "# SpamTagger Configuration..."
+echo "# SpamTagger Core Configuration..."
 echo "##################################"
 setterm --foreground default
 
+setterm --foreground blue
+echo "# Cloning SpamTagger-Core..."
+setterm --foreground default
+if [[ ! -e /usr/spamtagger ]]; then
+  git clone --recurse-submodules --depth=1 $APP_REPO /usr/spamtagger
+fi
+
+setterm --foreground blue
+echo "# Configuring BootC..."
+setterm --foreground default
+
+mkdir -p /usr/share/bootc
+echo "SpamTagger-Core Appliance" > /usr/share/bootc/description
+
+setterm --foreground blue
+echo "# Updating os-release..."
+setterm --foreground default
+sed -i 's|^BUG_REPORT_URL=.*|BUG_REPORT_URL="https://github.com/SpamTagger/SpamTagger-Core/issues"|' /usr/lib/os-release
+echo 'VARIANT="SpamTagger-Core"' >>/usr/lib/os-release
+
+setterm --foreground blue
+echo "# Updating /etc/issue..."
+setterm --foreground default
+
+setterm --foreground blue
+echo "# Updating /etc/motd..."
+setterm --foreground default
+
+echo "Welcome to SpamTagger Core!" >> /etc/motd
+
+setterm --foreground blue
+echo "# Setting default password (STPassw0rd)..."
+setterm --foreground default
+
+sed -i 's/root:[^:]*:/root:$y$j9T$kfLbiAeBa5PuQAZtTqBph1$ufRc85kbALH5Eg.IhtZcoyoDZ92SZfJmdX9p22Qg1D5:/' /etc/shadow
+
+setterm --foreground blue
+echo "# Creating empty configuration file..."
+setterm --foreground default
+
+touch /etc/spamtagger.conf

@@ -34,8 +34,8 @@ jobs:
       image: "ghcr.io/ublue-os/devcontainer:latest"
       options: "--privileged --volume /var/lib/containers:/var/lib/containers --security-opt seccomp=unconfined --security-opt label=disable --user 0:0"
     env:
-      CAYO_VARIANT: ${{ matrix.variant }}
-      CAYO_VERSION: ${{ matrix.version }}
+      SPAMTAGGER_VARIANT: ${{ matrix.variant }}
+      SPAMTAGGER_VERSION: ${{ matrix.version }}
 
     steps:
       - name: Checkout
@@ -45,7 +45,7 @@ jobs:
         run: git config --system --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Build Image
-        run: just build
+        run: just build 
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
