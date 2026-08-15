@@ -34,7 +34,6 @@ apt install --assume-yes --no-install-recommends --no-install-suggests \
   apt-utils \
   ca-certificates \
   console-data \
-  composer \
   cpanminus \
   cron \
   curl \
