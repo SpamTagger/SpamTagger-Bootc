@@ -21,6 +21,8 @@ spamtagger-13: &spamtagger-13
   # TODO: Implement a Renovate Regex
   source: ghcr.io/spamtagger/debian-bootc-core:trixie
   version: 13
+  codename: trixie
+  release: stable
   exim: 4.99
   default: false
 spamtagger-core-13: &spamtagger-core-13
@@ -28,6 +30,8 @@ spamtagger-core-13: &spamtagger-core-13
   # TODO: Implement a Renovate Regex
   source: ghcr.io/spamtagger/debian-bootc-core:trixie
   version: 13
+  codename: trixie
+  release: stable
   exim: 4.99
   default: true
 

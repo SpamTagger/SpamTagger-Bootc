@@ -50,6 +50,8 @@ image_repo="$(image-get repo)"
 image_name="$(image-get name)"
 image_upstream="$(image-get upstream)"
 image_version="$(image-get version)"
+image_release="$(image-get release)"
+image_codename="$(image-get codename)"
 exim_version="$(image-get exim)"
 image_description="$(image-get description)"
 image_is_default="$(image-get default)"
@@ -101,15 +103,16 @@ gen-tags $variant="" $version="":
     {{ default-inputs }}
     {{ get-names }}
     set ${CI:+-x} -eou pipefail
+
     # Generate Timestamp with incrementing version point
     TIMESTAMP="$(date +%Y%m%d)"
     LIST_TAGS="$(mktemp)"
     while [[ ! -s "$LIST_TAGS" ]]; do
        skopeo list-tags docker://$image_registry/$image_org/$image_name > "$LIST_TAGS"
     done
-    if [[ $(cat "$LIST_TAGS" | jq "any(.Tags[]; contains(\"$image_tag-$TIMESTAMP\"))") == "true" ]]; then
+    if [[ $(cat "$LIST_TAGS" | jq "any(.Tags[]; contains(\"$variant-$version.$TIMESTAMP\"))") == "true" ]]; then
        POINT="1"
-       while $(cat "$LIST_TAGS" | jq -e "any(.Tags[]; contains(\"$image_tag-$TIMESTAMP.$POINT\"))")
+       while $(cat "$LIST_TAGS" | jq -e "any(.Tags[]; contains(\"$variant-$version-$TIMESTAMP.$POINT\"))")
        do
            (( POINT++ ))
        done
@@ -119,19 +122,19 @@ gen-tags $variant="" $version="":
         TIMESTAMP="$TIMESTAMP.$POINT"
     fi
 
-    # Add a sha tag for tracking builds during a pull request
     SHA_SHORT="$(git rev-parse --short HEAD)"
-
-    # Define Versions
-    COMMIT_TAGS=()
-    if [[ -n "{{ env('GITHUB_PR_NUMBER', '') }}" ]]; then
-        COMMIT_TAGS=("$image_tag" "pr-$image_tag-$SHA_SHORT" "pr-$image_tag-{{ env('GITHUB_PR_NUMBER', '') }}")
-    fi
-    BUILD_TAGS=("$variant" "$image_tag" "$image_tag-$TIMESTAMP")
-
+    TAGS=()
+    for t in $image_version $image_codename $image_release; do
+        if [[ -n "{{ env('GITHUB_PR_NUMBER', '') }}" ]]; then
+            TAGS+=("${t}-pr-{{ env('GITHUB_PR_NUMBER', '') }}")
+        else
+            TAGS+=("${t}")
+            TAGS+=("${t}-$SHA_SHORT")
+            TAGS+=("${t}.$TIMESTAMP")
+        fi
+    done
     declare -A output
-    output["BUILD_TAGS"]="${BUILD_TAGS[*]}"
-    output["COMMIT_TAGS"]="${COMMIT_TAGS[*]}"
+    output["TAGS"]="${TAGS[*]}"
     output["TIMESTAMP"]="$TIMESTAMP"
     echo "${output[@]@K}"
 
@@ -168,15 +171,11 @@ build-container $variant="" $version="":
 
     # Tags
     declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
-    if [[ "{{ env('GITHUB_EVENT_NAME', '') }}" =~ pull_request ]]; then
-        tags=(${gen_tags["COMMIT_TAGS"]})
-    else
-        tags=(${gen_tags["BUILD_TAGS"]})
-    fi
+    tags=(${gen_tags["TAGS"]})
     TIMESTAMP="${gen_tags["TIMESTAMP"]}"
     TAGS=()
     for tag in "${tags[@]}"; do
-        TAGS+=("--tag" "localhost/$image_name:$tag")
+        TAGS+=("--tag" "localhost/$image_name:$variant-$tag")
     done
 
     # OSTree Labels
@@ -359,7 +358,6 @@ clean $variant $version $registry="":
 push-to-registry $variant="" $version="" $destination="" $transport="":
     #!/usr/bin/bash
     {{ if env('CI', '') != '' { logsum } else { '' } }}
-
     {{ default-inputs }}
     {{ get-names }}
 
@@ -375,15 +373,16 @@ push-to-registry $variant="" $version="" $destination="" $transport="":
     : "${destination:=$image_registry/$image_org}"
     : "${transport:="docker://"}"
 
-    declare -a TAGS=($({{ podman }} image list localhost/$image_name:$image_tag --noheading --format 'table {{{{ .Tag }}'))
-    for tag in "${TAGS[@]}"; do
+    declare -A gen_tags="($({{ just }} gen-tags $variant $version))"
+    tags=(${gen_tags["TAGS"]})
+    for tag in "${tags[@]}"; do
         for i in {1..5}; do
-            {{ podman }} push {{ if env('COSIGN_PRIVATE_KEY', '') != '' { '--sign-by-sigstore=/tmp/sigstore-params.yaml' } else { '' } }} "localhost/$image_name:$image_tag" "$transport$destination/$image_name:$tag" 2>&1 && break || sleep $((5 * i));
+            {{ podman }} push {{ if env('COSIGN_PRIVATE_KEY', '') != '' { '--sign-by-sigstore=/tmp/sigstore-params.yaml' } else { '' } }} "localhost/$image_name:$variant-$tag" "$transport$destination/$variant-$tag" 2>&1 && break || sleep $((5 * i));
             if [[ $i -eq '5' ]]; then
                 exit 1
             fi
         done
-        {{ if env('CI', '') != '' { 'log_sum $destination/$image_name:$tag' } else { '' } }}
+        {{ if env('CI', '') != '' { 'log_sum $destination/$image_name:$variant-$tag' } else { '' } }}
     done
     {{ if env('CI', '') != '' { 'log_sum "\`\`\`"' } else { '' } }}
     {{ if env('COSIGN_PRIVATE_KEY', '') != '' { 'rm /tmp/cosign.key' } else { '' } }}
