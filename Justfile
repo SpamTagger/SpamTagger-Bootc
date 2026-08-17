@@ -43,7 +43,7 @@ function image-get() {
       echo $(IFS="" yq -Mr ".images[\"spamtagger-bootc-${variant}-${version}\"][\"$1\"]" images.yaml)
     fi
 }
-source_image="$(image-get source)"
+image_source="$(image-get source)"
 image_org="$(image-get org)"
 image_registry="$(image-get registry)"
 image_repo="$(image-get repo)"
@@ -178,6 +178,18 @@ build-container $variant="" $version="":
         TAGS+=("--tag" "localhost/$image_name:$variant-$tag")
     done
 
+    # Programatic Date: should allow for reproducing the same Digest
+    BUILDER_DATE=$(date -u -d "@$(git log -1 --format=%ct)" '+%Y-%m-%dT%H:%M:%SZ')
+    BUILDER_HASH=$(git log -1 --format=%H)
+    APPLICATION_JSON=$(curl -fsSL -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/SpamTagger/$variant/commits?per_page=1")
+    APPLICATION_DATE=$(echo $APPLICATION_JSON | jq -r '.[0].commit.committer.date')
+    APPLICATION_HASH=$(echo $APPLICATION_JSON | jq -r '.[0].commit.tree.sha')
+    SOURCE_DATE=$(skopeo inspect --format '{{ "{{index .Labels \"org.opencontainers.image.created\"}}" }}' docker://$image_source)
+    SOURCE_HASH=$(skopeo inspect --format '{{ "{{.Digest}}" }}' docker://$image_source | cut -d : -f 2)
+    DATE=$SOURCE_DATE
+    [[ "$BUILDER_DATE" > "$DATE" ]] && DATE=$BUILDER_DATE
+    [[ "$APPLICATION_DATE" > "$DATE" ]] && DATE=$APPLICATION_DATE
+
     # OSTree Labels
     IMAGE_VERSION="$image_version.$TIMESTAMP"
     LABELS=(
@@ -187,7 +199,7 @@ build-container $variant="" $version="":
         "--label" "io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/205223896?s=200&v=4"
         "--label" "io.artifacthub.package.maintainers=[{\"name\": \"JohnMertz\", \"email\": \"git@john.me.tz\"}]"
         "--label" "io.artifacthub.package.readme-url=https://raw.githubusercontent.com/$image_registry/$image_org/$image_repo/main/README.md"
-        "--label" "org.opencontainers.image.created=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)"
+        "--label" "org.opencontainers.image.created=$DATE"
         "--label" "org.opencontainers.image.description=$image_description"
         "--label" "org.opencontainers.image.license=GPLv3"
         "--label" "org.opencontainers.image.source=https://raw.githubusercontent.com/$image_org/$image_repo/refs/heads/main/Containerfile.in"
@@ -195,6 +207,13 @@ build-container $variant="" $version="":
         "--label" "org.opencontainers.image.url=https://github.com/$image_org/$image_repo"
         "--label" "org.opencontainers.image.vendor=$image_org"
         "--label" "org.opencontainers.image.version=${IMAGE_VERSION}"
+        "--label" "org.opencontainers.image.base.name=$image_source"
+        "--label" "org.spamtagger.application.digest=${APPLICATION_HASH}"
+        "--label" "org.spamtagger.application.date=${APPLICATION_DATE}"
+        "--label" "org.spamtagger.builder.digest=${BUILDER_HASH}"
+        "--label" "org.spamtagger.builder.date=${BUILDER_DATE}"
+        "--label" "org.spamtagger.base.digest=${SOURCE_HASH}"
+        "--label" "org.spamtagger.base.date=${SOURCE_DATE}"
     )
 
     # Hypothetically provide support for other architectures supported by Debian*/
@@ -215,7 +234,7 @@ build-container $variant="" $version="":
         "--cpp-flag=-DEXIM_VERSION_SUB=$exim_version"
         "--cpp-flag=-DVERSION_SUB=$version"
         "--cpp-flag=-DVARIANT_SUB=$variant"
-        "--cpp-flag=-DSOURCE_IMAGE=$source_image"
+        "--cpp-flag=-DSOURCE_IMAGE=$image_source"
         "--cpp-flag=-DARCH_SUB=$ARCH"
         "--cpp-flag=-DSPAMTAGGER_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/${variant}/commits?per_page=1 | jq -r '.[] | .sha')"
         "--cpp-flag=-DST_MAILSCANNER_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/st-mailscanner/commits?per_page=1 | jq -r '.[] | .sha')"
@@ -251,7 +270,7 @@ build-container $variant="" $version="":
     echo "$labels" >> {{ builddir / '$variant-$version/Containerfile' }}
     sed -i '/^$/d;/^#.*$/d' {{ builddir / '$variant-$version/Containerfile' }}
 
-    {{ podman }} pull $source_image
+    {{ podman }} pull $image_source
 
     # Build Image
     {{ podman }} build -f container/Containerfile.in "${BUILD_ARGS[@]}" "${LABELS[@]}" "${TAGS[@]}" {{ justfile_dir() }}/container
