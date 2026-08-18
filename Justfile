@@ -226,6 +226,7 @@ build-container $variant="" $version="":
         fi
     fi
 
+    [[ "$variant" == "spamtagger-core" ]] && BUILD_ARGS+=("--cpp-flag=-DCORE")
     {{ if env('CI', '') != '' { 'BUILD_ARGS+=("--cpp-flag=-DCI_SETX")' } else { '' } }}
 
     # Programatic Date: should allow for reproducing the same Digest
