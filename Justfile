@@ -177,44 +177,7 @@ build-container $variant="" $version="":
     for tag in "${tags[@]}"; do
         TAGS+=("--tag" "localhost/$image_name:$variant-$tag")
     done
-
-    # Programatic Date: should allow for reproducing the same Digest
-    BUILDER_DATE=$(date -u -d "@$(git log -1 --format=%ct)" '+%Y-%m-%dT%H:%M:%SZ')
-    BUILDER_HASH=$(git log -1 --format=%H)
-    APPLICATION_JSON=$(curl -fsSL -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/SpamTagger/$variant/commits?per_page=1")
-    APPLICATION_DATE=$(echo $APPLICATION_JSON | jq -r '.[0].commit.committer.date')
-    APPLICATION_HASH=$(echo $APPLICATION_JSON | jq -r '.[0].commit.tree.sha')
-    SOURCE_DATE=$(skopeo inspect --format '{{ "{{index .Labels \"org.opencontainers.image.created\"}}" }}' docker://$image_source)
-    SOURCE_HASH=$(skopeo inspect --format '{{ "{{.Digest}}" }}' docker://$image_source | cut -d : -f 2)
-    DATE=$SOURCE_DATE
-    [[ "$BUILDER_DATE" > "$DATE" ]] && DATE=$BUILDER_DATE
-    [[ "$APPLICATION_DATE" > "$DATE" ]] && DATE=$APPLICATION_DATE
-
-    # OSTree Labels
     IMAGE_VERSION="$image_version.$TIMESTAMP"
-    LABELS=(
-        "--label" "containers.bootc=1"
-        "--label" "io.artifacthub.package.deprecated=false"
-        "--label" "io.artifacthub.package.keywords=bootc,debian"
-        "--label" "io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/205223896?s=200&v=4"
-        "--label" "io.artifacthub.package.maintainers=[{\"name\": \"JohnMertz\", \"email\": \"git@john.me.tz\"}]"
-        "--label" "io.artifacthub.package.readme-url=https://raw.githubusercontent.com/$image_registry/$image_org/$image_repo/main/README.md"
-        "--label" "org.opencontainers.image.created=$DATE"
-        "--label" "org.opencontainers.image.description=$image_description"
-        "--label" "org.opencontainers.image.license=GPLv3"
-        "--label" "org.opencontainers.image.source=https://raw.githubusercontent.com/$image_org/$image_repo/refs/heads/main/Containerfile.in"
-        "--label" "org.opencontainers.image.title=\"$variant $version\""
-        "--label" "org.opencontainers.image.url=https://github.com/$image_org/$image_repo"
-        "--label" "org.opencontainers.image.vendor=$image_org"
-        "--label" "org.opencontainers.image.version=${IMAGE_VERSION}"
-        "--label" "org.opencontainers.image.base.name=$image_source"
-        "--label" "org.spamtagger.application.digest=${APPLICATION_HASH}"
-        "--label" "org.spamtagger.application.date=${APPLICATION_DATE}"
-        "--label" "org.spamtagger.builder.digest=${BUILDER_HASH}"
-        "--label" "org.spamtagger.builder.date=${BUILDER_DATE}"
-        "--label" "org.spamtagger.base.digest=${SOURCE_HASH}"
-        "--label" "org.spamtagger.base.date=${SOURCE_DATE}"
-    )
 
     # Hypothetically provide support for other architectures supported by Debian*/
     # NOTE: Currently DCC only supports amd64 and arm64
@@ -246,12 +209,59 @@ build-container $variant="" $version="":
     done
     if [[ "{{ app_repo }}" == http* ]]; then
         BUILD_ARGS+=("--cpp-flag=-DAPP_REPO_SUB={{ app_repo }}")
+        APPLICATION_JSON=$(curl -fsSL -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/SpamTagger/$variant/commits?per_page=1")
+        APPLICATION_DATE=$(echo $APPLICATION_JSON | jq -r '.[0].commit.committer.date')
+        APPLICATION_HASH=$(echo $APPLICATION_JSON | jq -r '.[0].commit.tree.sha')
     else
         BUILD_ARGS+=("--cpp-flag=-DUSE_LOCAL_REPO")
         BUILD_ARGS+=("--cpp-flag=-DAPP_REPO_SUB={{ app_repo }}")
+        if [[ -e "{{ app_repo }}/.git" ]]; then
+            cd "{{ app_repo }}"
+            APPLICATION_DATE=$(date -u -d "@$(git log -1 --format=%ct)" '+%Y-%m-%dT%H:%M:%SZ')
+            APPLICATION_HASH=$(git log -1 --format=%H)
+            cd - >/dev/null
+        else
+            APPLICATION_DATE=null
+            APPLICATION_HASH=null
+        fi
     fi
 
     {{ if env('CI', '') != '' { 'BUILD_ARGS+=("--cpp-flag=-DCI_SETX")' } else { '' } }}
+
+    # Programatic Date: should allow for reproducing the same Digest
+    BUILDER_DATE=$(date -u -d "@$(git log -1 --format=%ct)" '+%Y-%m-%dT%H:%M:%SZ')
+    BUILDER_HASH=$(git log -1 --format=%H)
+    SOURCE_DATE=$(skopeo inspect --format '{{ "{{index .Labels \"org.opencontainers.image.created\"}}" }}' docker://$image_source)
+    SOURCE_HASH=$(skopeo inspect --format '{{ "{{.Digest}}" }}' docker://$image_source | cut -d : -f 2)
+    DATE=$SOURCE_DATE
+    [[ "$BUILDER_DATE" > "$DATE" ]] && DATE=$BUILDER_DATE
+    [[ "$APPLICATION_DATE" > "$DATE" ]] && DATE=$APPLICATION_DATE
+
+    # OSTree Labels
+    LABELS=(
+        "--label" "containers.bootc=1"
+        "--label" "io.artifacthub.package.deprecated=false"
+        "--label" "io.artifacthub.package.keywords=bootc,debian"
+        "--label" "io.artifacthub.package.logo-url=https://avatars.githubusercontent.com/u/205223896?s=200&v=4"
+        "--label" "io.artifacthub.package.maintainers=[{\"name\": \"JohnMertz\", \"email\": \"git@john.me.tz\"}]"
+        "--label" "io.artifacthub.package.readme-url=https://raw.githubusercontent.com/$image_registry/$image_org/$image_repo/main/README.md"
+        "--label" "org.opencontainers.image.created=$DATE"
+        "--label" "org.opencontainers.image.description=$image_description"
+        "--label" "org.opencontainers.image.license=GPLv3"
+        "--label" "org.opencontainers.image.source=https://raw.githubusercontent.com/$image_org/$image_repo/refs/heads/main/Containerfile.in"
+        "--label" "org.opencontainers.image.title=\"$variant $version\""
+        "--label" "org.opencontainers.image.url=https://github.com/$image_org/$image_repo"
+        "--label" "org.opencontainers.image.vendor=$image_org"
+        "--label" "org.opencontainers.image.version=${IMAGE_VERSION}"
+        "--label" "org.opencontainers.image.base.name=$image_source"
+        "--label" "org.spamtagger.application.digest=${APPLICATION_HASH}"
+        "--label" "org.spamtagger.application.date=${APPLICATION_DATE}"
+        "--label" "org.spamtagger.builder.digest=${BUILDER_HASH}"
+        "--label" "org.spamtagger.builder.date=${BUILDER_DATE}"
+        "--label" "org.spamtagger.base.digest=${SOURCE_HASH}"
+        "--label" "org.spamtagger.base.date=${SOURCE_DATE}"
+    )
+
 
     # Render Containerfile
     flags=()
