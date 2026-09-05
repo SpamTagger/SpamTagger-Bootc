@@ -28,5 +28,3 @@ cat <<<"$(jq '.transports.docker |=. + {
 ]}' <"/etc/containers/policy.json")" >"/tmp/policy.json"
 
 mv /tmp/policy.json /etc/containers/policy.json
-mkdir -p /etc/pki/containers
-mv /run/cosign.pub /etc/pki/containers/cosign.pub

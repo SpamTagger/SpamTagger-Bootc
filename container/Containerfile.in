@@ -79,12 +79,19 @@ RUN --mount=type=cache,dst=/var/cache \
 RUNEOF
 
 /* Copy in cosign.pub key */
-COPY cosign.pub /run/cosign.pub
+COPY cosign.pub /etc/pki/containers/cosign.pub
 
 /* Run Bash recipe to finalize image */
-RUN bash <<'RUNEOF'
+RUN --mount=type=cache,dst=/var/cache \
+  --mount=type=tmpfs,dst=/var/log \
+  --mount=type=tmpfs,dst=/var/tmp \
+  --mount=type=tmpfs,dst=/tmp \
+  bash <<'RUNEOF'
 #include "build_files/finalize"
 RUNEOF
+
+/* Workaround for persistent log file */
+RUN ["rm", "/var/log/apt/eipp.log.xz"]
 
 /* Test BootC image */
 RUN ["bootc", "container", "lint", "--fatal-warnings", "--no-truncate"]

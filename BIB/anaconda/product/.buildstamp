@@ -1,6 +1,0 @@
-[Main]
-Product=<VARIANT>
-Version=<VERSION>
-BugURL=https://github.com/SpamTagger/SpamTagger/issues
-IsFinal=False
-UUID=<TAG>

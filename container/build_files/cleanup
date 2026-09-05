@@ -85,6 +85,7 @@ rm -rf \
   /var/lib/xfonts \
   /var/lib/xml-core \
   /var/local \
+  /var/log/apt/eipp.log.xz \
   /var/mail \
   /var/spool/cron \
   /var/spool/exim4 \

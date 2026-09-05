@@ -77,30 +77,11 @@ setterm --foreground default
 
 touch /etc/spamtagger.conf
 
-setterm --foreground blue
-echo "# Applying Anaconda installer configuration..."
-setterm --foreground default
-
-if [ ! -d /etc/anaconda/conf.d ]; then
-  mkdir -p /etc/anaconda/conf.d
-fi
-cp /usr/spamtagger/install/anaconda/conf.d/spamtagger.conf /etc/anaconda/conf.d/
-# /*
-#if [ ! -d /etc/anaconda/post-scripts ]; then
-#mkdir -p /etc/anaconda/post-scripts
-#fi
-#cp /usr/spamtagger/install/anaconda/post-scripts/spamtagger.ks /etc/anaconda/conf.d/
-# */
-if [ ! -d /etc/anaconda/profile.d ]; then
-  mkdir -p /etc/anaconda/profile.d
-fi
-cp /usr/spamtagger/install/anaconda/profile.d/spamtagger.conf /etc/anaconda/profile.d/
-
 setterm --foreground green
-echo "##################################"
+echo "####################################"
 echo "# Running Debian Bootstrap Script..."
-echo "##################################"
+echo "####################################"
 setterm --foreground default
 
-echo "# This is a child process which is designed to fail quickly and raise the problematic step using a 'x' instead of a '*' upon failure."
+echo "# This is a child process which is designed to fail quickly and raise the problematic step using a '✘' instead of a '✔️' upon failure."
 CI=1 /usr/spamtagger/debian-bootstrap/install.sh
