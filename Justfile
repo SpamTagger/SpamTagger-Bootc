@@ -1,10 +1,9 @@
 # vim: set ts=4 sw=4 expandtab :
-set unstable := true
 set shell:= ["bash", "-c"]
 
 just := just_executable()
 podman := require('podman')
-podman-remote := which('podman-remote') || podman + ' --remote'
+podman-remote := podman + ' --remote'
 builddir := shell('mkdir -p $1 && echo $1', absolute_path(env('SPAMTAGGER_BUILD', 'build')))
 image := "spamtagger-bootc"
 variant := env('SPAMTAGGER_VARIANT', shell('yq ".defaults.variant" images.yaml'))
