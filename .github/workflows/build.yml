@@ -47,7 +47,7 @@ jobs:
       - name: Prepare Buildah temporary directory
         run: |
           mkdir -p /var/lib/containers/buildah-tmp
-          echo "TMPDIR=/var/lib/containers/build-tmp" >> "$GITHUB_ENV"
+          echo "TMPDIR=/var/lib/containers/buildah-tmp" >> "$GITHUB_ENV"
 
       - name: Build Image
         run: just build
