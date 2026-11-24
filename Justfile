@@ -198,10 +198,31 @@ build-container $variant="" $version="":
         "--cpp-flag=-DVARIANT_SUB=$variant"
         "--cpp-flag=-DSOURCE_IMAGE=$image_source"
         "--cpp-flag=-DARCH_SUB=$ARCH"
-        "--cpp-flag=-DSPAMTAGGER_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/${variant}/commits?per_page=1 | jq -r '.[] | .sha')"
-        "--cpp-flag=-DST_MAILSCANNER_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/st-mailscanner/commits?per_page=1 | jq -r '.[] | .sha')"
-        "--cpp-flag=-DST_EXIM_HASH_SUB=$(curl -s https://api.github.com/repos/SpamTagger/st-exim/commits?per_page=1 | jq -r '.[] | .sha')"
     )
+    for i in {1..5}; do
+        SPAMTAGGER_HASH=$(curl -s https://api.github.com/repos/SpamTagger/${variant}/commits?per_page=1 | jq -r '.[] | .sha') && break || sleep $((5 * i));
+        if [[ $i -eq '5' ]]; then
+            exit 1
+        fi
+    done
+    BUILD_ARGS+=("--cpp-flag=-DSPAMTAGGER_HASH_SUB=$SPAMTAGGER_HASH")
+
+    for i in {1..5}; do
+        ST_MAILSCANNER_HASH=$(curl -s https://api.github.com/repos/SpamTagger/st-mailscanner/commits?per_page=1 | jq -r '.[] | .sha') && break || sleep $((5 * i));
+        if [[ $i -eq '5' ]]; then
+            exit 1
+        fi
+    done
+    BUILD_ARGS+=("--cpp-flag=-DST_MAILSCANNER_HASH_SUB=$ST_MAILSCANNER_HASH")
+
+    for i in {1..5}; do
+        ST_EXIM_HASH=$(curl -s https://api.github.com/repos/SpamTagger/st-exim/commits?per_page=1 | jq -r '.[] | .sha') && break || sleep $((5 * i));
+        if [[ $i -eq '5' ]]; then
+            exit 1
+        fi
+    done
+    BUILD_ARGS+=("--cpp-flag=-DST_EXIM_HASH_SUB=$ST_EXIM_HASH")
+
     mapfile -t image_cpp_flags < <(image-get cppFlags)
     for FLAG in $image_cpp_flags; do
         BUILD_ARGS+=("--cpp-flag=-D$FLAG")
@@ -505,7 +526,7 @@ build-disk $variant="" $version="" $registry="": start-machine
         echo "Removing existing disk image {{ builddir }}/disks/$variant-$version.img..."
         rm -f {{ builddir }}/disks/$variant-$version.img
     fi
- 
+
     # Preallocate disk image
     if [[ ! -d {{ builddir }}/disks ]]; then
         mkdir {{ builddir }}/disks
