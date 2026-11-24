@@ -44,8 +44,13 @@ jobs:
       - name: Mark Directory as Safe
         run: git config --system --add safe.directory "$GITHUB_WORKSPACE"
 
+      - name: Prepare Buildah temporary directory
+        run: |
+          mkdir -p /var/lib/containers/buildah-tmp
+          echo "TMPDIR=/var/lib/containers/build-tmp" >> "$GITHUB_ENV"
+
       - name: Build Image
-        run: just build 
+        run: just build
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
